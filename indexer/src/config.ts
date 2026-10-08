@@ -105,7 +105,18 @@ export function loadConfig(): Config {
   return {
     port: readInt("PORT", 8787),
     host: read("HOST") ?? "0.0.0.0",
-    rpcUrl: require_("NEXT_PUBLIC_SOLANA_RPC_URL"),
+    /*
+     * A keyed RPC endpoint carries a credential, and a `NEXT_PUBLIC_` variable is
+     * inlined into the browser bundle by Next.js. The indexer is a server process
+     * and has no reason to publish its provider key, so the server-only name is
+     * preferred and the public one is accepted only as a fallback.
+     *
+     * The public name remains supported because the frontend needs an RPC for
+     * wallet balances and transaction submission, and on a keyless provider such as
+     * `api.mainnet-beta.solana.com` there is no secret to leak. A deployment that
+     * sets a keyed URL in the public variable is publishing that key.
+     */
+    rpcUrl: read("RPC_URL") ?? require_("NEXT_PUBLIC_SOLANA_RPC_URL"),
     network: read("NEXT_PUBLIC_SOLANA_NETWORK") ?? "mainnet-beta",
     grpcEndpoint: read("GRPC_ENDPOINT") ?? null,
     grpcToken: read("GRPC_TOKEN") ?? null,
