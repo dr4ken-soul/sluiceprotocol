@@ -107,8 +107,8 @@ export function loadConfig(): Config {
     host: read("HOST") ?? "0.0.0.0",
     rpcUrl: require_("NEXT_PUBLIC_SOLANA_RPC_URL"),
     network: read("NEXT_PUBLIC_SOLANA_NETWORK") ?? "mainnet-beta",
-    grpcEndpoint: read("NEXT_PUBLIC_GRPC_ENDPOINT") ?? null,
-    grpcToken: read("NEXT_PUBLIC_GRPC_TOKEN") ?? null,
+    grpcEndpoint: read("GRPC_ENDPOINT") ?? null,
+    grpcToken: read("GRPC_TOKEN") ?? null,
     programs: {
       curve: readProgram("NEXT_PUBLIC_CURVE_PROGRAM_ID"),
       compliance: readProgram("NEXT_PUBLIC_COMPLIANCE_PROGRAM_ID"),

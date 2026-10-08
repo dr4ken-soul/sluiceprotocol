@@ -204,7 +204,7 @@ export async function subscribe(options: SubscriptionOptions): Promise<Subscript
 
   // Attempt 1: Yellowstone gRPC. Only attempted when an endpoint is configured,
   // since an absent endpoint is not a runtime failure.
-  const grpcEndpoint = process.env.NEXT_PUBLIC_GRPC_ENDPOINT;
+  const grpcEndpoint = process.env.GRPC_ENDPOINT;
   if (grpcEndpoint !== undefined && grpcEndpoint.trim().length > 0) {
     try {
       return await startGrpcSubscription({
@@ -223,7 +223,7 @@ export async function subscribe(options: SubscriptionOptions): Promise<Subscript
     }
   } else {
     console.warn(
-      "[sluice] NEXT_PUBLIC_GRPC_ENDPOINT is not set. Falling back to websocket accountSubscribe.",
+      "[sluice] GRPC_ENDPOINT is not set. Falling back to websocket accountSubscribe.",
     );
   }
 
@@ -299,7 +299,7 @@ async function startGrpcSubscription(options: GrpcOptions): Promise<Subscription
     if (typeof Client !== "function") {
       throw new Error(`default Client export not found in ${specifier}`);
     }
-    const token = process.env.NEXT_PUBLIC_GRPC_TOKEN ?? "";
+    const token = process.env.GRPC_TOKEN ?? "";
     client = new Client(endpoint, token, undefined);
   } catch (error) {
     throw new Error(
