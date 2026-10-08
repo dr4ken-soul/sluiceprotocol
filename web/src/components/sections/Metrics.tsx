@@ -12,10 +12,26 @@ import { useMarketplace } from "@/hooks/useLiveData";
 import { CountUp, Reveal } from "@/lib/motion";
 import { formatCompact, formatMicro } from "@/lib/format";
 import { DemoTag } from "@/components/ui";
+import type { IndexerError } from "@/lib/api";
 
 export function Metrics() {
-  const { data, isLoading } = useMarketplace();
+  const { data, error, isLoading } = useMarketplace();
   const metrics = data?.metrics;
+
+  /*
+    §1.8 is explicit that a figure which cannot be read must stop rather than fall
+    back to a plausible number, and the fixture rule in TEAM_OPS.md §1.2 says a
+    placeholder is worse than an admission. Rendering `metrics?.x ?? 0` did exactly
+    the prohibited thing: with no indexer configured every counter read `$0` and the
+    footnote read "Read from 0 account updates over grpc", which looks like a
+    protocol with no activity rather than a deployment with no data source behind it.
+    Those are very different claims and only one of them was true.
+
+    So the counters are replaced by the reason the read failed. The indexer error is
+    typed precisely for this, and its `kind` distinguishes a deployment state from
+    an incident.
+  */
+  const unavailable: IndexerError | null = error ?? null;
 
   const entries = [
     {
@@ -40,6 +56,41 @@ export function Metrics() {
     },
   ];
 
+  /*
+    The headline differs when there is nothing behind it. "Live on Solana mainnet"
+    describes the chain the contracts are deployed to, which stays true either way,
+    but it must not sit above four counters implying the protocol is reporting.
+  */
+  const heading = unavailable === null ? "Live on Solana mainnet" : "No live source";
+
+  if (unavailable !== null) {
+    return (
+      <section
+        data-section-name="Metrics"
+        className="relative overflow-hidden bg-[var(--bg-primary)] py-24 md:py-32"
+      >
+        <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-10">
+          <p className="mb-10 text-center font-mono text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
+            {heading}
+          </p>
+
+          <div className="mx-auto max-w-2xl border-l border-[var(--border-subtle)] pl-6">
+            <p className="font-mono text-[11px] uppercase tracking-[0.15em] text-[var(--text-muted)]">
+              {unavailable.kind === "unconfigured"
+                ? "No indexer configured"
+                : "Live data unavailable"}
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">
+              {unavailable.kind === "unconfigured"
+                ? "These four counters read from the indexer, which is not deployed yet. No figure is shown rather than a placeholder, because a zero here would read as a protocol with no activity instead of a deployment with no data source."
+                : unavailable.message}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       data-section-name="Metrics"
@@ -47,7 +98,7 @@ export function Metrics() {
     >
       <div className="relative z-10 mx-auto max-w-7xl px-6 md:px-10">
         <p className="mb-16 text-center font-mono text-xs uppercase tracking-[0.2em] text-[var(--text-muted)]">
-          Live on Solana mainnet
+          {heading}
         </p>
 
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
