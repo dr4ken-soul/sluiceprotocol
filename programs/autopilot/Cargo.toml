@@ -1,0 +1,24 @@
+[package]
+name = "sluice-autopilot"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Splits the DAMM v2 position into a locked floor tranche and a DLMM ladder, then harvests and compounds."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_autopilot"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+sluice-core-math.workspace = true

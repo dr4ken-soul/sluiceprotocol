@@ -1,0 +1,23 @@
+[features]
+seeds = false
+skip-lint = false
+
+[programs.localnet]
+sluice_curve = "Curve1111111111111111111111111111111111111111"
+sluice_compliance = "Cmpl1111111111111111111111111111111111111111"
+sluice_bond = "Bond11111111111111111111111111111111111111111"
+sluice_verifier = "Vrfy11111111111111111111111111111111111111111"
+sluice_settlement = "Stlm11111111111111111111111111111111111111111"
+sluice_redemption = "Rdmn11111111111111111111111111111111111111111"
+sluice_waterfall = "Wtfl11111111111111111111111111111111111111111"
+sluice_autopilot = "Aplt11111111111111111111111111111111111111111"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "echo 'Program tests run with anchor test'"

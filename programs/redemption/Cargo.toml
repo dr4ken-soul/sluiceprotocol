@@ -1,0 +1,24 @@
+[package]
+name = "sluice-redemption"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Pro rata claims on failed milestones, using a claim pattern so gas stays bounded by holder count."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_redemption"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+sluice-core-math.workspace = true

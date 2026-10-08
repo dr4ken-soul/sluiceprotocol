@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = [
+  "core-math",
+  "curve",
+  "compliance",
+  "bond",
+  "verifier",
+  "settlement",
+  "redemption",
+  "waterfall",
+  "autopilot",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+authors = ["Sluice contributors"]
+
+[workspace.dependencies]
+solana-zk-token-sdk = "=1.17.34"
+solana-sdk = "=1.17.34"
+anchor-lang = "=0.29.0"
+# `default-features = false` drops anchor-spl's `token_2022` default, which is what
+# re-enables spl-token-2022's `zk-ops` default and with it solana-zk-token-sdk. The
+# crates opt back in explicitly below with their own feature sets.
+anchor-spl = { version = "=0.29.0", default-features = false }
+# Pinned exactly. Anchor 0.29 accepts any `^1.16`, and letting it float pulls in
+# 1.18, which the Solana 1.17.34 platform toolchain cannot build.
+solana-program = "=1.17.34"
+# spl-token-2022 1.0.0 is the release that pairs with Solana 1.17 and Anchor 0.29.
+#
+# Default features are switched off deliberately. The defaults are `token-group` and
+# `zk-ops`, and `zk-ops` pulls in solana-zk-token-sdk, which requires solana-program
+# 1.18 and so cannot build on the Solana 1.17.34 platform toolchain. Sluice needs the
+# transfer hook interface, which is not behind either flag, so dropping the defaults
+# costs nothing and unblocks the toolchain.
+spl-token-2022 = { version = "1.0.0", default-features = false }
+spl-associated-token-account = { version = "3.3.0", features = ["writable"] }
+bytemuck = { version = "1.13", features = ["derive", "min_const_generics"] }
+sluice-core-math = { path = "core-math" }
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

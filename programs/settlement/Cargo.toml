@@ -1,0 +1,24 @@
+[package]
+name = "sluice-settlement"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Tranche release, fee claimer, creator vesting and atomic fee routing to the treasury PDA."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_settlement"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+sluice-core-math.workspace = true

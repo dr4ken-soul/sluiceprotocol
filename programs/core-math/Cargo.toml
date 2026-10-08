@@ -1,0 +1,12 @@
+[package]
+name = "sluice-core-math"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Dependency-free pure logic for Sluice: NAV anchored curve derivation, pro rata claim and waterfall distribution maths, and policy evaluation."
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]

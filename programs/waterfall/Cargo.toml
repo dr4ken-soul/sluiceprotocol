@@ -1,0 +1,24 @@
+[package]
+name = "sluice-waterfall"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Real-world cash flow distribution to holders, on a claim pattern with a fee charged only when a distribution occurs."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_waterfall"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+sluice-core-math.workspace = true

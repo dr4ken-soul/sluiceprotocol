@@ -1,0 +1,47 @@
+# Secrets and local configuration. Never committed.
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# The root .env is copied into each package as needed and never committed.
+programs/.env
+indexer/.env
+web/.env
+web/.env.local
+
+# Solana
+.anchor/
+target/
+*.key
+*.keypair
+test-ledger/
+deployments/
+
+# Node
+node_modules/
+.pnpm-store/
+npm-debug.log*
+yarn-error.log*
+.npm/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Build and coverage output
+dist/
+coverage/
+*.tsbuildinfo
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Logs
+logs/
+*.log

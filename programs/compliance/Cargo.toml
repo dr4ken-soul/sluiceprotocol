@@ -1,0 +1,25 @@
+[package]
+name = "sluice-compliance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Token-2022 transfer hook, jurisdiction policy registry and attestation registry for Sluice."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_compliance"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+spl-token-2022.workspace = true
+sluice-core-math.workspace = true

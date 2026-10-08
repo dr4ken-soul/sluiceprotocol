@@ -1,0 +1,24 @@
+[package]
+name = "sluice-verifier"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Milestone question validation, pluggable resolution and the default-no path for verifier silence."
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sluice_verifier"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+solana-program.workspace = true
+anchor-lang.workspace = true
+anchor-spl = { workspace = true, features = ["associated_token", "mint", "token"] }
+sluice-core-math.workspace = true

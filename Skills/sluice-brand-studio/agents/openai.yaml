@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sluice Brand Studio"
+  short_description: "Write Sluice X posts and art-direct brand visuals"
+  default_prompt: "Use $sluice-brand-studio to write or refine a Sluice X post or create a tailored Sluice visual prompt."
