@@ -116,7 +116,8 @@ export class IndexerStore {
       .filter((issuance) => VISIBLE_STATES.includes(issuance.state))
       .sort((a, b) => {
         // Open issuances first, then soonest settlement, then largest raise.
-        const rank = (state: string): number => (state === "settled" || state === "redeeming" ? 1 : 0);
+        const rank = (state: string): number =>
+          state === "settled" || state === "redeeming" ? 1 : 0;
         if (rank(a.state) !== rank(b.state)) return rank(a.state) - rank(b.state);
         const aClose = a.closesAt ?? Number.POSITIVE_INFINITY;
         const bClose = b.closesAt ?? Number.POSITIVE_INFINITY;
@@ -139,9 +140,7 @@ export class IndexerStore {
    */
   issuanceByTicker(ticker: string): LiveIssuance | undefined {
     const needle = ticker.trim().toUpperCase();
-    return this.allIssuances().find(
-      (issuance) => issuance.ticker.trim().toUpperCase() === needle,
-    );
+    return this.allIssuances().find((issuance) => issuance.ticker.trim().toUpperCase() === needle);
   }
 
   /** The most recent open milestone for an issuance. */

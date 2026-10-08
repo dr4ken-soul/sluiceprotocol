@@ -145,9 +145,9 @@ function decodeIssuance(data: Buffer | null, address: string): LiveIssuance | nu
     const stateRaw = data.readUInt8(offset);
 
     const tickerEnd = tickerBytes.indexOf(0);
-    const ticker = (
-      tickerEnd === -1 ? tickerBytes : tickerBytes.subarray(0, tickerEnd)
-    ).toString("ascii");
+    const ticker = (tickerEnd === -1 ? tickerBytes : tickerBytes.subarray(0, tickerEnd)).toString(
+      "ascii",
+    );
 
     return {
       address,
@@ -222,9 +222,7 @@ export async function subscribe(options: SubscriptionOptions): Promise<Subscript
       );
     }
   } else {
-    console.warn(
-      "[sluice] GRPC_ENDPOINT is not set. Falling back to websocket accountSubscribe.",
-    );
+    console.warn("[sluice] GRPC_ENDPOINT is not set. Falling back to websocket accountSubscribe.");
   }
 
   // Attempt 2: websocket accountSubscribe on the RPC provider.
@@ -444,13 +442,8 @@ function startWebsocketSubscription(options: WebsocketOptions): Subscription {
   const subscriptions: number[] = [];
   let pollTimer: ReturnType<typeof setInterval> | null = null;
   let stopped = false;
-  let attempt = 0;
 
-  onTransport(
-    "websocket",
-    true,
-    "Subscribed over websocket accountSubscribe, degraded from gRPC",
-  );
+  onTransport("websocket", true, "Subscribed over websocket accountSubscribe, degraded from gRPC");
 
   for (const key of keys) {
     if (stopped) return { stop: async () => undefined };
@@ -501,29 +494,39 @@ function startWebsocketSubscription(options: WebsocketOptions): Subscription {
     pollTimer = setInterval(refresh, POLL_INTERVAL_MS);
   };
 
-  // A log subscription on the first program doubles as a cheap liveness probe. If
-  // it never delivers, the socket is not carrying traffic even though the
-  // subscription call returned successfully, which is the failure mode
-  // `onAccountChange` hides.
-  let deliveries = 0;
-  const probeKey = keys[0];
-  if (probeKey !== undefined) {
-    connection.onLogs(probeKey, () => {
-      deliveries += 1;
-    });
-  }
+  /*
+   * Liveness probe.
+   *
+   * Probed against the slot stream, not against Sluice's own logs. An earlier
+   * version subscribed to logs mentioning the first programme and treated fifteen
+   * seconds of silence as a dead socket, which was wrong twice over: it degraded a
+   * perfectly healthy socket to polling whenever the protocol was simply idle, and
+   * a protocol with no issuances is exactly the state before launch. Slot updates
+   * arrive roughly every 400ms regardless of what the protocol is doing, so
+   * silence on this stream means the connection is actually broken.
+   *
+   * The first delivery resets the counter, so a socket that drops and recovers
+   * between probes is not mistaken for a socket that never worked.
+   */
+  let beats = 0;
+  connection.onSlotChange(() => {
+    beats += 1;
+  });
 
   let misses = 0;
   const probe = setInterval(() => {
     if (stopped) return;
-    if (deliveries > 0) return;
+    if (beats > 0) {
+      misses = 0;
+      return;
+    }
     misses += 1;
-    // Three consecutive five second probes with nothing delivered means the
-    // socket is not carrying traffic, so the poll takes over.
+    // Three consecutive five second probes with no slot update means the socket is
+    // not carrying traffic, so the poll takes over.
     if (misses >= 3) {
       clearInterval(probe);
       degradeToPoll(
-        "Websocket carried no updates for 15s, degraded to a fifteen second poll. Figures may lag",
+        "Websocket carried no slot updates for 15s, degraded to a fifteen second poll. Figures may lag",
       );
     }
   }, 5_000);

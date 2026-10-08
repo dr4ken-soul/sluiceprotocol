@@ -5,7 +5,8 @@
   "description": "Yellowstone gRPC indexer, public risk terminal API and deterministic featured-issuance selection for Sluice.",
   "type": "module",
   "engines": {
-    "node": ">=20.11"
+    "//": "Node 22.6 is the floor, not 20.11. `npm start` runs the TypeScript sources directly via --experimental-strip-types, which landed in 22.6, and tsconfig.json sets rewriteRelativeImportExtensions, which landed in 22.7. A host that resolved the older range would install Node 20 and the start script would exit immediately with 'bad option'. Verified 2026-10-08.",
+    "node": ">=22.7"
   },
   "scripts": {
     "dev": "tsx watch src/main.ts",

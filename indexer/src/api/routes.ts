@@ -12,18 +12,30 @@
  */
 
 import type { FastifyInstance } from "fastify";
-import { selectFeatured } from "../featured.ts";
 import type { Config } from "../config.ts";
 import { programsDeployed } from "../config.ts";
+import { selectFeatured } from "../featured.ts";
 import type { IndexerStore } from "../store.ts";
 import type { Holding } from "../types.ts";
 
+/**
+ * Reduces an RPC URL to its host, discarding any key in the query string.
+ *
+ * Provider endpoints put the credential in the URL, so the URL is a secret. Health
+ * output is public and readable cross-origin, so only the host is reported.
+ */
+function rpcHostOf(rpcUrl: string): string {
+  try {
+    return new URL(rpcUrl).host;
+  } catch {
+    // A malformed URL is a configuration error that `loadConfig` already rejects,
+    // so this is only a fallback for a value assembled some other way.
+    return "unknown";
+  }
+}
+
 /** Registers every route on the server. */
-export function registerRoutes(
-  app: FastifyInstance,
-  config: Config,
-  store: IndexerStore,
-): void {
+export function registerRoutes(app: FastifyInstance, config: Config, store: IndexerStore): void {
   /**
    * The landing page's single read: featured issuance, visible issuances, metrics
    * and health together. One round trip so the hero card and the table beneath it
@@ -64,12 +76,18 @@ export function registerRoutes(
    * The degradation note is the point of this route. A terminal that has fallen back
    * from gRPC to a websocket, or from a websocket to a poll, has figures that can
    * lag, and the reader is entitled to know.
+   *
+   * The RPC host is reported so a reader can tell mainnet from devnet, but any
+   * credential in it is stripped first. This route is public and the CORS policy
+   * allows any origin, so echoing a provider key here would publish it to anyone
+   * who opened the network tab. Found by reading the response of a local boot,
+   * which returned the key in full.
    */
   app.get("/api/health", async () => ({
     ...store.health(),
     programsDeployed: programsDeployed(config),
     demoMode: config.demoMode,
-    rpcUrl: config.rpcUrl,
+    rpcHost: rpcHostOf(config.rpcUrl),
     network: config.network,
   }));
 

@@ -82,7 +82,10 @@ describe("selectFeatured", () => {
   });
 
   it("ignores an issuance with no milestones at all", () => {
-    const none = issuance({ address: "None111111111111111111111111111111111111111", milestones: [] });
+    const none = issuance({
+      address: "None111111111111111111111111111111111111111",
+      milestones: [],
+    });
     expect(selectFeatured([none], false, NOW)).toBeNull();
   });
 

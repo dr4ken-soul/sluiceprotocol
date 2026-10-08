@@ -22,9 +22,7 @@ async function main(): Promise<void> {
   } catch (error) {
     // A missing RPC URL is fatal and is reported as such rather than leaving a
     // process running that answers every request with empty state.
-    console.error(
-      `[sluice] ${error instanceof Error ? error.message : String(error)}`,
-    );
+    console.error(`[sluice] ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
     return;
   }
