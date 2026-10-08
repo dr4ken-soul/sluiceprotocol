@@ -249,48 +249,58 @@ interface GrpcOptions {
 /**
  * Starts the Yellowstone gRPC transport.
  *
- * The `@solana/ Yellowstone` client is loaded dynamically so that an indexer
- * configured for the websocket transport does not pay for a gRPC client it will
- * never construct, and so a missing optional dependency surfaces as a typed error
- * that triggers the documented fallback rather than a module resolution crash at
- * boot.
+ * The client is loaded dynamically so that an indexer configured for the websocket
+ * transport does not pay for a gRPC client it will never construct, and so a
+ * missing optional dependency surfaces as a typed error that triggers the documented
+ * fallback rather than a module resolution crash at boot.
+ *
+ * `@triton-one/yellowstone-grpc` publishes prebuilt native bindings for Linux and
+ * macOS only. On Windows the import throws, which is caught here and degraded to
+ * the websocket transport exactly as the fallback chain requires.
  */
 async function startGrpcSubscription(options: GrpcOptions): Promise<Subscription> {
   const { endpoint, keys, onIssuance, onRemoval, onTransport } = options;
 
-  /** Minimal shape of the Yellowstone subscription handle we depend on. */
-  interface GeyserSubscription {
-    unsubscribe(): Promise<void>;
+  /*
+   * The real client surface, as published by the package's own type definitions:
+   *
+   *   new Client(endpoint, xToken, channelOptions, reconnectOptions?)
+   *   client.subscribe(request?: SubscribeRequest): Promise<ClientDuplexStream>
+   *   client.close(): void
+   *
+   * The duplex stream is a Node Duplex, so updates arrive on `data`, further
+   * subscriptions go out on `write`, and `end` tears the stream down. The third
+   * constructor argument is required positionally even though it accepts
+   * `undefined`.
+   */
+  interface DuplexStream {
+    on(event: string, listener: (payload: never) => void): unknown;
+    write(chunk: unknown): void;
+    end(): void;
   }
 
-  interface GeyserClient {
-    subscribe(
-      filters: unknown,
-      callbacks: Record<string, unknown>,
-    ): Promise<GeyserSubscription | (() => Promise<void>)>;
+  interface GrpcClient {
+    subscribe(request?: unknown): Promise<DuplexStream>;
+    close(): void;
   }
 
-  let client: GeyserClient;
+  let client: GrpcClient;
 
   try {
-    // Resolved at runtime rather than imported statically, for two reasons. An
-    // indexer configured for the websocket transport should not load a gRPC
-    // client it will never construct, and the client ships native bindings that do
-    // not exist on every platform, so a static import would turn a recoverable
-    // transport problem into a boot failure.
-    //
-    // `@triton-one/yellowstone-grpc` publishes prebuilt native bindings for Linux
-    // and macOS only. On Windows the import throws, which is caught here and
-    // degraded to the websocket transport exactly as the fallback chain requires.
     const specifier = "@triton-one/yellowstone-grpc";
     const resolved = (await import(specifier)) as {
-      GeyserGrpcClient?: new (url: string, token?: string) => GeyserClient;
+      default?: new (
+        endpoint: string,
+        xToken: string | undefined,
+        channelOptions: undefined,
+      ) => GrpcClient;
     };
-    const Client = resolved.GeyserGrpcClient;
+    const Client = resolved.default;
     if (typeof Client !== "function") {
-      throw new Error(`GeyserGrpcClient export not found in ${specifier}`);
+      throw new Error(`default Client export not found in ${specifier}`);
     }
-    client = new Client(endpoint, process.env.NEXT_PUBLIC_GRPC_TOKEN ?? "");
+    const token = process.env.NEXT_PUBLIC_GRPC_TOKEN ?? "";
+    client = new Client(endpoint, token, undefined);
   } catch (error) {
     throw new Error(
       `gRPC client could not be constructed: ${error instanceof Error ? error.message : String(error)}`,
@@ -299,50 +309,93 @@ async function startGrpcSubscription(options: GrpcOptions): Promise<Subscription
 
   let stopped = false;
   let attempt = 0;
-  let subscription: { unsubscribe: () => Promise<void> } | null = null;
+  let stream: DuplexStream | null = null;
+
+  /**
+   * Builds the subscribe request.
+   *
+   * Filtered to the programme accounts specifically, which is the whole point of
+   * the firehose: an unfiltered subscription pulls every account on the network and
+   * drowns the process.
+   */
+  const buildRequest = (): unknown => ({
+    accounts: {
+      accountsSubscribe: keys.map((key) => ({
+        account: [key.toBase58()],
+        owner: [],
+        filters: [],
+      })),
+    },
+    accountsDataSlice: [],
+    slots: {},
+    transactions: {},
+    blocks: {},
+    blocksMeta: {},
+    entry: {},
+    commitment: 1,
+  });
+
+  /** Decodes one `SubscribeUpdate` and hands it to the store if it is an issuance. */
+  const handleUpdate = (raw: unknown): void => {
+    const update = raw as {
+      update?: {
+        account?: { pubkey?: string; data?: Uint8Array | string; account?: unknown };
+      };
+      createdAccount?: { pubkey?: string; data?: Uint8Array | string };
+      deletedAccount?: { pubkey?: string };
+    };
+
+    const account = update.update?.account ?? update.createdAccount;
+    if (account === undefined) return;
+
+    const pubkey = account.pubkey;
+    if (pubkey === undefined) return;
+
+    if (update.deletedAccount !== undefined) {
+      onRemoval(pubkey);
+      return;
+    }
+
+    const rawData = account.data;
+    const buffer =
+      typeof rawData === "string" ? Buffer.from(rawData, "base64") : Buffer.from(rawData ?? []);
+    const issuance = decodeIssuance(buffer, pubkey);
+    if (issuance !== null) onIssuance(issuance);
+  };
 
   const connect = async (): Promise<void> => {
     while (!stopped) {
       try {
-        await new Promise<void>((resolve, reject) => {
-          const filters = keys.map((key) => ({ accounts: [key.toBase58()], accountInclude: [] }));
-          const timer = setTimeout(() => {
-            reject(new Error("gRPC subscribe did not resolve within 10s"));
-          }, 10_000);
+        const opened = await client.subscribe(buildRequest());
+        if (stopped) {
+          opened.end();
+          return;
+        }
 
-          void Promise.resolve(
-            client.subscribe(filters, {
-              onAccountUpdate: (update: { account?: { pubkey: string; data?: Uint8Array | string } }) => {
-                const pubkey = update.account?.pubkey;
-                if (pubkey === undefined) return;
-                const raw = update.account?.data;
-                const buffer = typeof raw === "string" ? Buffer.from(raw, "base64") : Buffer.from(raw ?? []);
-                const issuance = decodeIssuance(buffer, pubkey);
-                if (issuance !== null) onIssuance(issuance);
-              },
-              onError: (error: Error) => reject(error),
-            }),
-          ).then(
-            (handle) => {
-              subscription = handle as { unsubscribe: () => Promise<void> };
-              clearTimeout(timer);
-              attempt = 0;
-              onTransport("grpc", true, "Subscribed over Yellowstone gRPC");
-              resolve();
-            },
-            (error: unknown) => {
-              clearTimeout(timer);
-              reject(error instanceof Error ? error : new Error(String(error)));
-            },
-          );
-        });
+        stream = opened;
+        attempt = 0;
+        onTransport("grpc", true, "Subscribed over Yellowstone gRPC");
+
+        opened.on("data", handleUpdate as (payload: never) => void);
+        opened.on("error", ((error: Error) => {
+          console.warn(`[sluice] gRPC stream error: ${error.message}`);
+        }) as (payload: never) => void);
+        opened.on("end", (() => {
+          if (stopped) return;
+          attempt += 1;
+          const delay = Math.min(RECONNECT_MIN_MS * 2 ** (attempt - 1), RECONNECT_MAX_MS);
+          onTransport("grpc", false, "gRPC stream ended, reconnecting");
+          console.warn(`[sluice] gRPC stream ended. Reconnecting in ${delay}ms.`);
+          setTimeout(() => void connect(), delay);
+        }) as (payload: never) => void);
+
         return;
       } catch (error) {
         if (stopped) return;
         attempt += 1;
         const delay = Math.min(RECONNECT_MIN_MS * 2 ** (attempt - 1), RECONNECT_MAX_MS);
         const note = `gRPC dropped: ${error instanceof Error ? error.message : String(error)}`;
-        onTransport("websocket", false, note);
+        onTransport("grpc", false, note);
         console.warn(`[sluice] ${note}. Reconnecting in ${delay}ms.`);
         await sleep(delay);
       }
@@ -354,7 +407,18 @@ async function startGrpcSubscription(options: GrpcOptions): Promise<Subscription
   return {
     stop: async () => {
       stopped = true;
-      if (subscription !== null) await subscription.unsubscribe();
+      if (stream !== null) {
+        try {
+          stream.end();
+        } catch {
+          // A stream already torn down is not an error worth failing a shutdown over.
+        }
+      }
+      try {
+        client.close();
+      } catch {
+        // Same.
+      }
     },
   };
 }

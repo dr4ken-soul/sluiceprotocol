@@ -11,7 +11,7 @@
  */
 
 import { motion, useReducedMotion, type Variants } from "motion/react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * The standard entrance for a section.
@@ -69,21 +69,28 @@ export function BlurReveal({
   return (
     <span className={className}>
       {words.map((word, index) => (
-        <motion.span
-          // Words are positional, so index is a stable identity here.
-          key={`${word}-${index}`}
-          className="inline-block"
-          initial={reduced ? { opacity: 0 } : { filter: "blur(10px)", opacity: 0, y: 24 }}
-          animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
-          transition={{
-            duration: reduced ? 0.2 : duration,
-            ease: "easeOut",
-            delay: reduced ? 0 : baseDelay + index * stagger,
-          }}
-        >
-          {word}
+        // Words are positional, so index is a stable identity here.
+        <Fragment key={`${word}-${index}`}>
+          <motion.span
+            className="inline-block"
+            initial={reduced ? { opacity: 0 } : { filter: "blur(10px)", opacity: 0, y: 24 }}
+            animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+            transition={{
+              duration: reduced ? 0.2 : duration,
+              ease: "easeOut",
+              delay: reduced ? 0 : baseDelay + index * stagger,
+            }}
+          >
+            {word}
+          </motion.span>
+          {/*
+            The gap lives here, as a sibling of the animated spans, and never inside
+            one of them. CSS strips trailing whitespace from inside an inline-block,
+            so putting it in there renders every word flush against the next and the
+            headline reads "Issuethe realasset."
+          */}
           {index < words.length - 1 ? " " : ""}
-        </motion.span>
+        </Fragment>
       ))}
     </span>
   );
