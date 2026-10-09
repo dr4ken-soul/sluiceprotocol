@@ -1,4 +1,7 @@
+
 'use client';
+
+import { GateLink } from "@/components/layout/GateLink";
 
 /**
  * The terminal screen.
@@ -260,9 +263,9 @@ export function Terminal() {
           releases.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link href="/app/issue">
+          <GateLink href="/app/issue">
             <PrimaryButton>Start an issuance</PrimaryButton>
-          </Link>
+          </GateLink>
         </div>
       </section>
     </main>

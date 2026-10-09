@@ -1,4 +1,7 @@
+
 'use client';
+
+import { GateLink } from "@/components/layout/GateLink";
 
 /**
  * The scroll-morph navigation shell.
@@ -19,7 +22,6 @@ import { useEffect, useState } from "react";
 import { useSession } from "./useSession";
 import { ConnectButton } from "./ConnectModal";
 import { WalletPill } from "./WalletPill";
-
 
 /** Centre links. Hidden below `md`, where the hamburger takes over. */
 const LINKS = [
@@ -209,13 +211,13 @@ export function Nav() {
                 {link.label}
               </a>
             ))}
-            <Link
+            <GateLink
               href="/app"
               onClick={() => setOpen(false)}
               className="font-display text-3xl text-[var(--text-muted)]"
             >
               Terminal
-            </Link>
+            </GateLink>
           </div>
         </div>
       ) : null}

@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { ConnectModalProvider } from "@/components/layout/ConnectModal";
 import { RouteErrorBoundary } from "@/components/layout/RouteErrorBoundary";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { Terminal } from "@/components/terminal/Terminal";
@@ -16,7 +15,6 @@ import { Terminal } from "@/components/terminal/Terminal";
  */
 export default function TerminalPage() {
   return (
-    <ConnectModalProvider>
       <RouteErrorBoundary>
         <ProtectedRoute>
           {/* The disconnect toast reads the query string, so it needs a boundary. */}
@@ -25,6 +23,5 @@ export default function TerminalPage() {
           </Suspense>
         </ProtectedRoute>
       </RouteErrorBoundary>
-    </ConnectModalProvider>
   );
 }

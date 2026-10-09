@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { ConnectModalProvider } from "@/components/layout/ConnectModal";
 import { RouteErrorBoundary } from "@/components/layout/RouteErrorBoundary";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AssetDetail } from "@/components/asset/AssetDetail";
@@ -14,7 +13,6 @@ import { AssetDetail } from "@/components/asset/AssetDetail";
  */
 export default function AssetDetailPage() {
   return (
-    <ConnectModalProvider>
       <RouteErrorBoundary>
         <ProtectedRoute>
           <Suspense fallback={null}>
@@ -22,6 +20,5 @@ export default function AssetDetailPage() {
           </Suspense>
         </ProtectedRoute>
       </RouteErrorBoundary>
-    </ConnectModalProvider>
   );
 }

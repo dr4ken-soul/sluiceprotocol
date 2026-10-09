@@ -32,6 +32,22 @@ export function DisconnectToast() {
     return () => window.clearTimeout(timer);
   }, [flag, pathname, router]);
 
+  /*
+   * Two different events used to arrive under one flag, and only one of them is a
+   * disconnection.
+   *
+   * `ProtectedRoute` redirects here after it decides there is no session. That is
+   * true both when a wallet was connected and has since gone, and when there was
+   * never a wallet at all, which is the common case for a visitor who clicked a
+   * link before connecting. Telling the second group "Wallet disconnected. Your
+   * positions stay on chain." is a false statement about state they never had.
+   *
+   * The gate now intercepts those clicks and opens the connect modal instead of
+   * navigating, so this path is reached far less often. It is still reachable by
+   * hand, so it is handled: `neverConnected` says which of the two happened.
+   */
+  const neverConnected = flag === "1" && params.get("hadSession") !== "1";
+
   return (
     <AnimatePresence>
       {visible ? (
@@ -45,7 +61,9 @@ export function DisconnectToast() {
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
           <p className="font-body text-xs text-[var(--text-secondary)]">
-            Wallet disconnected. Your positions stay on chain.
+            {neverConnected
+              ? "Connect a wallet to open the terminal."
+              : "Wallet disconnected. Your positions stay on chain."}
           </p>
         </motion.div>
       ) : null}

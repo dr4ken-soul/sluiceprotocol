@@ -1,4 +1,7 @@
+
 'use client';
+
+import { GateLink } from "@/components/layout/GateLink";
 
 /**
  * Section 4: Live Marketplace.
@@ -11,7 +14,6 @@
  * primary action when nothing qualifies and demo mode is off.
  */
 
-import Link from "next/link";
 import { useMarketplace } from "@/hooks/useLiveData";
 import { EmptyState, ErrorState, LiveDot, PrimaryButton, Skeleton } from "@/components/ui";
 import { IssuanceCardRow, IssuanceRow } from "./IssuanceCard";
@@ -55,9 +57,9 @@ export function Marketplace() {
           <EmptyState
             message="No open issuances yet. The first one appears here the moment it is funded."
             action={
-              <Link href="/app/issue">
+              <GateLink href="/app/issue">
                 <PrimaryButton>Issue an asset</PrimaryButton>
-              </Link>
+              </GateLink>
             }
           />
         ) : (

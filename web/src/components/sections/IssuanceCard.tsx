@@ -1,4 +1,7 @@
+
 'use client';
+
+import { GateLink } from "@/components/layout/GateLink";
 
 /**
  * The live issuance card.
@@ -40,12 +43,12 @@ export function IssuanceCard({ issuance, loading, onPrimary }: Props) {
           funded.
         </p>
         <div className="mt-6">
-          <Link
+          <GateLink
             href="/app/issue"
             className="inline-flex min-h-[44px] items-center rounded-full bg-[var(--accent)] px-6 py-3 font-mono text-sm font-medium text-[var(--bg-primary)] transition-colors duration-200 hover:bg-[var(--accent-hover)]"
           >
             Issue an asset
-          </Link>
+          </GateLink>
         </div>
       </div>
     );

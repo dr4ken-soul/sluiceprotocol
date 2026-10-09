@@ -8,7 +8,6 @@
  * at least two sections between them. Eight distinct layout families, none repeated.
  */
 
-import { ConnectModalProvider } from "@/components/layout/ConnectModal";
 import { RouteErrorBoundary } from "@/components/layout/RouteErrorBoundary";
 import { Hero } from "@/components/sections/Hero";
 import { Problem } from "@/components/sections/Problem";
@@ -22,7 +21,6 @@ import { Footer } from "@/components/sections/Footer";
 
 export default function LandingPage() {
   return (
-    <ConnectModalProvider>
       <RouteErrorBoundary>
         {/* The skip link targets this, so it is the one focusable landmark. */}
         <main id="main">
@@ -37,6 +35,5 @@ export default function LandingPage() {
         </main>
         <Footer />
       </RouteErrorBoundary>
-    </ConnectModalProvider>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense, type ReactNode } from "react";
 import { Providers } from "@/components/layout/Providers";
+import { ConnectModalProvider } from "@/components/layout/ConnectModal";
 import { Nav } from "@/components/layout/Nav";
 import { GrainOverlay } from "@/components/layout/GrainOverlay";
 import { DisconnectToast } from "@/components/layout/DisconnectToast";
@@ -42,13 +43,29 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en-GB">
       <body className="bg-[var(--bg-primary)] text-[var(--text-primary)] antialiased">
         <Providers>
-          {/* Skip to main content. First focusable element on every page, per §14. */}
-          <a href="#main" className="skip-link">
-            Skip to main content
-          </a>
-          <Nav />
-          <GrainOverlay />
-          {children}
+          {/*
+            The connect modal is mounted here, in the root layout, and not in each
+            page.
+
+            It has to wrap the chrome as well as the page content, because the nav's
+            "Connect wallet" button is the one entry point most visitors use and it
+            lives in `Nav`, above any page-level provider. The provider was mounted in
+            each `page.tsx`, so the nav button resolved `useConnectModal` against the
+            default context whose `openModal` is a no-op. Clicking it did nothing at
+            all, silently, with no error anywhere.
+
+            A provider that a button above it cannot see is a provider in the wrong
+            place, and mounting it once at the root also means the modal is a single
+            instance shared across client navigations rather than one per route.
+          */}
+          <ConnectModalProvider>
+            {/* Skip to main content. First focusable element on every page, per §14. */}
+            <a href="#main" className="skip-link">
+              Skip to main content
+            </a>
+            <Nav />
+            <GrainOverlay />
+            {children}
           {/*
             The toast reads the query string to know whether a disconnect just
             happened. Reading search params opts a tree out of static rendering, so
@@ -59,6 +76,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <DisconnectToast />
           </Suspense>
+          </ConnectModalProvider>
         </Providers>
       </body>
     </html>
