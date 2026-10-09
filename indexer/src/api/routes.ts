@@ -49,7 +49,16 @@ export function registerRoutes(app: FastifyInstance, config: Config, store: Inde
       featured: selectFeatured(store.allIssuances(), config.demoMode, Date.now() / 1000),
       issuances: store.visibleIssuances(),
       metrics: store.metrics(),
-      health: store.health(),
+      /*
+       * `network` rides along with health on every read, not just on /api/health.
+       *
+       * The frontend labels its figures with the cluster they came from, so that
+       * label cannot depend on a separately fetched endpoint: two reads could
+       * disagree, and a devnet deployment showing a mainnet label is a false claim
+       * rather than a cosmetic slip. Carrying it on the same payload makes the
+       * label and the figures impossible to desynchronise.
+       */
+      health: { ...store.health(), network: config.network },
       asOf: Math.floor(Date.now() / 1000),
     };
   });

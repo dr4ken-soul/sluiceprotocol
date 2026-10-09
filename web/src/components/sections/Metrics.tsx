@@ -57,11 +57,26 @@ export function Metrics() {
   ];
 
   /*
-    The headline differs when there is nothing behind it. "Live on Solana mainnet"
-    describes the chain the contracts are deployed to, which stays true either way,
-    but it must not sit above four counters implying the protocol is reporting.
+    The headline names the cluster the figures actually come from, read from the
+    indexer rather than hardcoded.
+
+    It said "Live on Solana mainnet" unconditionally, which is a false claim the
+    moment the app is pointed at devnet: the figures would be devnet figures under a
+    mainnet label, and the marketing checklist treats a mainnet claim as a
+    verifiable assertion. Deriving it from `health.network` means the label cannot
+    drift from the data, and a misconfigured deployment says what it actually is.
   */
-  const heading = unavailable === null ? "Live on Solana mainnet" : "No live source";
+  const cluster = data?.health.network;
+  const heading =
+    unavailable !== null
+      ? "No live source"
+      : cluster === "devnet"
+        ? "Live on Solana devnet"
+        : cluster === "testnet"
+          ? "Live on Solana testnet"
+          : cluster === "mainnet-beta"
+            ? "Live on Solana mainnet"
+            : "Live on Solana";
 
   if (unavailable !== null) {
     return (

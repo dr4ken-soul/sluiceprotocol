@@ -92,6 +92,15 @@ export interface StreamHealth {
   readonly updates: number;
   readonly startedAt: number;
   readonly note: string;
+  /**
+   * The cluster these figures came from, as the indexer reports it.
+   *
+   * Absent on the dedicated health route's own payload in older indexer builds, so
+   * it is optional. The metrics section reads it to label the figures, and a
+   * deployment that predates this field falls back to a generic heading rather than
+   * asserting a cluster it cannot confirm.
+   */
+  readonly network?: string;
 }
 
 /** The featured issuance, plus everything the landing page needs in one read. */

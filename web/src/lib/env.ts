@@ -9,29 +9,50 @@
  * real data.
  */
 
-/** Reads a public environment variable, treating blank as absent. */
-function readPublic(name: string): string | undefined {
-  const value = process.env[name];
+/**
+ * Reads a public environment variable, treating blank as absent.
+ *
+ * Every `process.env.NEXT_PUBLIC_*` access below is written out as a literal
+ * property read on purpose. Next.js substitutes those at build time and inlines the
+ * value into the client bundle, which is the only mechanism by which a public
+ * variable reaches the browser at all.
+ *
+ * The previous version took a `name` parameter and did `process.env[name]`. That is
+ * a dynamic access, so Next.js had nothing to substitute and emitted a runtime
+ * lookup instead, which resolves to `undefined` in the browser. Every public
+ * variable was therefore undefined on the client regardless of what Vercel held:
+ * the indexer URL read as unconfigured and the Privy app ID never reached the
+ * provider. Confirmed by scanning the deployed bundle, where none of the values
+ * appeared inlined and the dynamic lookup pattern was present.
+ *
+ * A helper that hides the access is the natural thing to write and it silently
+ * defeats the whole mechanism, so the repetition here is load-bearing. If a
+ * variable needs adding, add the literal read and pass it in rather than
+ * reintroducing an indirection.
+ */
+function clean(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
 /** Base URL of the indexer, which owns the live reads. */
-export const INDEXER_URL = readPublic("NEXT_PUBLIC_INDEXER_URL") ?? "";
+export const INDEXER_URL =
+  clean(process.env.NEXT_PUBLIC_INDEXER_URL) ?? "";
 
 /** Whether an indexer is configured at all. */
 export const INDEXER_CONFIGURED = INDEXER_URL.length > 0;
 
 /** Solana RPC endpoint, used for holder balances and transaction submission. */
 export const SOLANA_RPC_URL =
-  readPublic("NEXT_PUBLIC_SOLANA_RPC_URL") ?? "https://api.mainnet-beta.solana.com";
+  clean(process.env.NEXT_PUBLIC_SOLANA_RPC_URL) ?? "https://api.mainnet-beta.solana.com";
 
 /** Cluster the app reads. */
-export const SOLANA_NETWORK = readPublic("NEXT_PUBLIC_SOLANA_NETWORK") ?? "mainnet-beta";
+export const SOLANA_NETWORK =
+  clean(process.env.NEXT_PUBLIC_SOLANA_NETWORK) ?? "mainnet-beta";
 
 /** Privy app ID. Absent means the issuer path is unavailable, not silently broken. */
-export const PRIVY_APP_ID = readPublic("NEXT_PUBLIC_PRIVY_APP_ID");
+export const PRIVY_APP_ID = clean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
 
 /** Whether Privy is configured. */
 export const PRIVY_CONFIGURED = PRIVY_APP_ID !== undefined;
@@ -44,19 +65,19 @@ export const PRIVY_CONFIGURED = PRIVY_APP_ID !== undefined;
  * invents a demo row; it renders the DEMO tag from the `isDemo` flag the indexer
  * returns.
  */
-export const DEMO_MODE = readPublic("NEXT_PUBLIC_DEMO_MODE") !== "false";
+export const DEMO_MODE = clean(process.env.NEXT_PUBLIC_DEMO_MODE) !== "false";
 
 /** Program IDs, absent until the programmes are deployed. */
 export const PROGRAMS = {
-  curve: readPublic("NEXT_PUBLIC_CURVE_PROGRAM_ID"),
-  compliance: readPublic("NEXT_PUBLIC_COMPLIANCE_PROGRAM_ID"),
-  bond: readPublic("NEXT_PUBLIC_BOND_PROGRAM_ID"),
-  verifier: readPublic("NEXT_PUBLIC_VERIFIER_PROGRAM_ID"),
-  settlement: readPublic("NEXT_PUBLIC_SETTLEMENT_PROGRAM_ID"),
-  redemption: readPublic("NEXT_PUBLIC_REDEMPTION_PROGRAM_ID"),
-  waterfall: readPublic("NEXT_PUBLIC_WATERFALL_PROGRAM_ID"),
-  autopilot: readPublic("NEXT_PUBLIC_AUTOPILOT_PROGRAM_ID"),
-  treasury: readPublic("NEXT_PUBLIC_TREASURY_ADDRESS"),
+  curve: clean(process.env.NEXT_PUBLIC_CURVE_PROGRAM_ID),
+  compliance: clean(process.env.NEXT_PUBLIC_COMPLIANCE_PROGRAM_ID),
+  bond: clean(process.env.NEXT_PUBLIC_BOND_PROGRAM_ID),
+  verifier: clean(process.env.NEXT_PUBLIC_VERIFIER_PROGRAM_ID),
+  settlement: clean(process.env.NEXT_PUBLIC_SETTLEMENT_PROGRAM_ID),
+  redemption: clean(process.env.NEXT_PUBLIC_REDEMPTION_PROGRAM_ID),
+  waterfall: clean(process.env.NEXT_PUBLIC_WATERFALL_PROGRAM_ID),
+  autopilot: clean(process.env.NEXT_PUBLIC_AUTOPILOT_PROGRAM_ID),
+  treasury: clean(process.env.NEXT_PUBLIC_TREASURY_ADDRESS),
 } as const;
 
 /** Whether every programme ID is present. */
@@ -86,17 +107,17 @@ export function explorerTransaction(signature: string): string {
  * with volume or vary by user. Revenue grows because volume grows.
  */
 export const FEES = {
-  curveBps: Number(readPublic("NEXT_PUBLIC_FEE_CURVE_BPS") ?? 30),
-  milestoneMarketBps: Number(readPublic("NEXT_PUBLIC_FEE_MILESTONEMKT_BPS") ?? 50),
-  secondaryBps: Number(readPublic("NEXT_PUBLIC_FEE_SECONDARY_BPS") ?? 30),
-  redemptionBps: Number(readPublic("NEXT_PUBLIC_FEE_REDEMPTION_BPS") ?? 25),
-  waterfallBps: Number(readPublic("NEXT_PUBLIC_FEE_WATERFALL_BPS") ?? 50),
-  bridgeBps: Number(readPublic("NEXT_PUBLIC_FEE_BRIDGE_BPS") ?? 15),
-  issuanceFeeFlatUsd: Number(readPublic("NEXT_PUBLIC_ISSUANCE_FEE_FLAT_USD") ?? 200),
-  issuanceFeeBps: Number(readPublic("NEXT_PUBLIC_ISSUANCE_FEE_BPS") ?? 25),
-  presetFeeFlatUsd: Number(readPublic("NEXT_PUBLIC_PRESET_FEE_FLAT_USD") ?? 49),
-  presetFeeBps: Number(readPublic("NEXT_PUBLIC_PRESET_FEE_BPS") ?? 25),
-  attestationMarginBps: Number(readPublic("NEXT_PUBLIC_ATTESTATION_MARGIN_BPS") ?? 150),
+  curveBps: Number(clean(process.env.NEXT_PUBLIC_FEE_CURVE_BPS) ?? 30),
+  milestoneMarketBps: Number(clean(process.env.NEXT_PUBLIC_FEE_MILESTONEMKT_BPS) ?? 50),
+  secondaryBps: Number(clean(process.env.NEXT_PUBLIC_FEE_SECONDARY_BPS) ?? 30),
+  redemptionBps: Number(clean(process.env.NEXT_PUBLIC_FEE_REDEMPTION_BPS) ?? 25),
+  waterfallBps: Number(clean(process.env.NEXT_PUBLIC_FEE_WATERFALL_BPS) ?? 50),
+  bridgeBps: Number(clean(process.env.NEXT_PUBLIC_FEE_BRIDGE_BPS) ?? 15),
+  issuanceFeeFlatUsd: Number(clean(process.env.NEXT_PUBLIC_ISSUANCE_FEE_FLAT_USD) ?? 200),
+  issuanceFeeBps: Number(clean(process.env.NEXT_PUBLIC_ISSUANCE_FEE_BPS) ?? 25),
+  presetFeeFlatUsd: Number(clean(process.env.NEXT_PUBLIC_PRESET_FEE_FLAT_USD) ?? 49),
+  presetFeeBps: Number(clean(process.env.NEXT_PUBLIC_PRESET_FEE_BPS) ?? 25),
+  attestationMarginBps: Number(clean(process.env.NEXT_PUBLIC_ATTESTATION_MARGIN_BPS) ?? 150),
 } as const;
 
 /**
