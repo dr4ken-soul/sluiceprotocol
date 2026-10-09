@@ -31,7 +31,20 @@
 /** Base URL of the Panta API. Documented as the only host. */
 export const PANTA_BASE_URL = "https://live-api.panta.market/api/v1";
 
-/** Categories Panta accepts. Anything else is rejected by quote. */
+/**
+ * Categories Panta is documented to accept.
+ *
+ * This is a hint for the type, not the authority. The authoritative list is
+ * whatever `GET /categories/` returns for the key in use, and the two genuinely
+ * differ: a `pk_test_` key returns only `crypto, politics, sports, entertainment`,
+ * while a `pk_live_` key returns all eight. Hardcoding either one produces a
+ * client that works with one key and silently sends an invalid category with the
+ * other, and the rejection arrives as an opaque `INVALID_MARKET_PARAMS` from a
+ * quote call rather than as anything locally diagnosable.
+ *
+ * So the list is fetched and checked before a quote is attempted. Verified against
+ * both environments on 2026-10-09.
+ */
 const PANTA_CATEGORIES = [
   "sports",
   "crypto",
@@ -44,6 +57,24 @@ const PANTA_CATEGORIES = [
 ] as const;
 
 export type PantaCategory = (typeof PANTA_CATEGORIES)[number];
+
+/**
+ * Picks a category that the live API will accept.
+ *
+ * Prefers the configured one, and falls back rather than failing, because a
+ * milestone is a yes/no question about an asset and `crypto` is the nearest honest
+ * label when the taxonomy does not offer a better one. Returning `null` would force
+ * every caller to handle a taxonomy change as an outage, and refusing to open a
+ * market over a label is worse than opening it under a slightly wrong one, which a
+ * reader can see.
+ */
+export function resolveCategory(configured: string | null | undefined): PantaCategory {
+  const wanted = (configured ?? "").trim().toLowerCase();
+  if ((PANTA_CATEGORIES as readonly string[]).includes(wanted)) {
+    return wanted as PantaCategory;
+  }
+  return "crypto";
+}
 
 /** Options for the client. */
 export interface PantaOptions {
@@ -170,6 +201,17 @@ export class PantaError extends Error {
 export class PantaClient {
   readonly #apiKey: string | undefined;
   readonly #fetch: typeof fetch;
+  /*
+   * Categories for this key, resolved once on first use and then remembered.
+   *
+   * The list differs between the test and live environments, so it belongs to the
+   * key rather than to the module. Cached because it is a taxonomy, not a live
+   * reading, and every quote would otherwise pay an extra round trip for an answer
+   * that cannot change within a session. A failed fetch leaves it null and the
+   * quote proceeds with the local list, which is strictly better than refusing to
+   * open a market because a metadata call was unavailable.
+   */
+  #categories: readonly string[] | null = null;
 
   constructor(options: PantaOptions) {
     this.#apiKey = options.apiKey;
@@ -272,15 +314,51 @@ export class PantaClient {
     }
   }
 
+  /**
+   * The categories this key accepts, from `GET /categories/`.
+   *
+   * Cached per client because the answer is a taxonomy rather than a live reading.
+   * A failure is swallowed and reported as `null`, which makes the caller fall back
+   * to the local list. A taxonomy call being unavailable is not a reason to refuse
+   * to open a market.
+   */
+  async categories(): Promise<readonly string[] | null> {
+    if (this.#categories !== null) return this.#categories;
+    try {
+      const response = await this.#request<{ categories?: string[] }>("GET", "/categories/");
+      if (Array.isArray(response.categories) && response.categories.length > 0) {
+        this.#categories = response.categories;
+        return this.#categories;
+      }
+    } catch {
+      // Deliberately ignored. The local list is a documented superset.
+    }
+    return null;
+  }
+
   /** Quotes the creation fee and reserves a session. */
   async quoteCreate(request: MilestoneMarketRequest): Promise<CreateQuote> {
     this.#assertValid(request);
+
+    // Resolve the category against what this key actually accepts before spending
+    // the call, so a taxonomy mismatch surfaces as a precise local error rather
+    // than a 400 from the quote endpoint with no field detail.
+    const accepted = await this.categories();
+    const wanted = resolveCategory(request.category);
+    if (accepted !== null && !accepted.includes(wanted)) {
+      throw new PantaError(
+        `This Panta key does not accept the category "${wanted}". It accepts: ${accepted.join(", ")}.`,
+        "INVALID_MARKET_PARAMS",
+        400,
+      );
+    }
+
     return this.#request<CreateQuote>("POST", "/markets/create/quote/", {
       wallet: request.wallet,
       question: request.question,
       resolutionRule: request.resolutionRule,
       sourcesOfTruth: [...request.sourcesOfTruth],
-      category: request.category ?? "other",
+      category: wanted,
       startTime: request.startTime,
       endTime: request.endTime,
       resolutionTime: request.resolutionTime,

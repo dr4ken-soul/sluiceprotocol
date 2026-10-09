@@ -20,7 +20,13 @@ import {
   resolveFromMarket,
 } from "../adjudication.ts";
 import type { Config } from "../config.ts";
-import { PantaClient, PantaError, type PantaMarket } from "../panta.ts";
+import {
+  type PantaCategory,
+  PantaClient,
+  PantaError,
+  type PantaMarket,
+  resolveCategory,
+} from "../panta.ts";
 
 const NOW = 1_789_000_000;
 
@@ -292,6 +298,114 @@ describe("attributeTrade", () => {
       marketId: "Mkt111",
     });
     expect(result).toMatchObject({ ok: false, code: "UNCONFIGURED" });
+  });
+});
+
+describe("category resolution", () => {
+  it("keeps a documented category", () => {
+    expect(resolveCategory("other")).toBe("other");
+    expect(resolveCategory("finance")).toBe("finance");
+  });
+
+  it("normalises case and whitespace", () => {
+    expect(resolveCategory("  OTHER ")).toBe("other");
+  });
+
+  it("falls back for an unknown or absent category rather than failing", () => {
+    expect(resolveCategory("real-estate")).toBe("crypto");
+    expect(resolveCategory(null)).toBe("crypto");
+    expect(resolveCategory(undefined)).toBe("crypto");
+  });
+});
+
+describe("categories come from the key, not from a hardcoded list", () => {
+  /** Builds a client whose /categories/ answers with one fixed list. */
+  function clientWithCategories(categories: string[]): PantaClient {
+    return new PantaClient({
+      apiKey: "pk_test_x",
+      fetchImpl: (async (input: unknown) => {
+        const url = String(input);
+        if (url.endsWith("/categories/")) {
+          return new Response(JSON.stringify({ categories }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ createId: "cr_1", expectedEventPda: "Pda111" }), {
+          status: 200,
+        });
+      }) as unknown as typeof fetch,
+    });
+  }
+
+  const VALID = {
+    wallet: "Wallet111",
+    question: "Did the Q3 deliveries complete?",
+    resolutionRule: "Verifier signs the manifest hash",
+    sourcesOfTruth: ["https://example.com/manifest.json"],
+    startTime: NOW + 3_600,
+    endTime: NOW + 86_400,
+    resolutionTime: NOW + 90_000,
+    imageUrl: "https://cdn.example.com/q3.png",
+  };
+
+  it("accepts 'other' when the live taxonomy offers it", async () => {
+    const client = clientWithCategories(["crypto", "politics", "sports", "other"]);
+    await expect(client.quoteCreate({ ...VALID, category: "other" })).resolves.toBeDefined();
+  });
+
+  it("refuses locally when the test taxonomy omits 'other'", async () => {
+    // This is the real case: pk_test_ returns only four categories, so a client
+    // that hardcoded 'other' sent an invalid value and got an opaque 400 back from
+    // the quote endpoint with no field detail.
+    const client = clientWithCategories(["crypto", "politics", "sports", "entertainment"]);
+    await expect(client.quoteCreate({ ...VALID, category: "other" })).rejects.toThrow(
+      /does not accept the category "other"/,
+    );
+  });
+
+  it("falls back to an accepted label rather than refusing to open a market", async () => {
+    const client = clientWithCategories(["crypto", "politics", "sports", "entertainment"]);
+    /*
+     * The cast stands in for `PANTA_CATEGORY`, which is operator-supplied free text
+     * read straight from the environment. The typed field rejects an arbitrary
+     * string at compile time, which is right for a caller inside this codebase, but
+     * the runtime guard is what protects against a bad value in the environment,
+     * and that is what this asserts.
+     */
+    const fromEnv = "unknown-label" as unknown as PantaCategory;
+    await expect(client.quoteCreate({ ...VALID, category: fromEnv })).resolves.toBeDefined();
+  });
+
+  it("proceeds on the local list when the taxonomy call fails", async () => {
+    const client = new PantaClient({
+      apiKey: "pk_test_x",
+      fetchImpl: (async (input: unknown) => {
+        const url = String(input);
+        if (url.endsWith("/categories/")) return new Response("nope", { status: 500 });
+        return new Response(JSON.stringify({ createId: "cr_1", expectedEventPda: "Pda111" }), {
+          status: 200,
+        });
+      }) as unknown as typeof fetch,
+    });
+    await expect(client.quoteCreate({ ...VALID, category: "other" })).resolves.toBeDefined();
+  });
+
+  it("caches the taxonomy rather than refetching per quote", async () => {
+    let categoryCalls = 0;
+    const client = new PantaClient({
+      apiKey: "pk_test_x",
+      fetchImpl: (async (input: unknown) => {
+        const url = String(input);
+        if (url.endsWith("/categories/")) {
+          categoryCalls += 1;
+          return new Response(JSON.stringify({ categories: ["other"] }), { status: 200 });
+        }
+        return new Response(JSON.stringify({ createId: "cr_1", expectedEventPda: "Pda111" }), {
+          status: 200,
+        });
+      }) as unknown as typeof fetch,
+    });
+    await client.quoteCreate({ ...VALID, category: "other" });
+    await client.quoteCreate({ ...VALID, category: "other" });
+    expect(categoryCalls).toBe(1);
   });
 });
 

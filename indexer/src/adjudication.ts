@@ -13,7 +13,13 @@
  */
 
 import type { Config } from "./config.ts";
-import { type MilestoneMarketRequest, PantaClient, PantaError, type PantaMarket } from "./panta.ts";
+import {
+  type MilestoneMarketRequest,
+  PantaClient,
+  PantaError,
+  type PantaMarket,
+  resolveCategory,
+} from "./panta.ts";
 
 /**
  * The depth floor from `APP_BLUEPRINT.md` §"Thin market defence".
@@ -82,6 +88,14 @@ export function marketRequestFor(input: {
   resolutionTime: number;
   imageUrl: string;
   description?: string;
+  /**
+   * The configured catalog category.
+   *
+   * Defaults to `other`, which is the honest label for a milestone on an asset, but
+   * is routed through `resolveCategory` rather than hardcoded so a key whose
+   * taxonomy omits it degrades to an accepted label instead of failing the quote.
+   */
+  category?: string;
 }): MilestoneMarketRequest {
   return {
     wallet: input.wallet,
@@ -93,7 +107,7 @@ export function marketRequestFor(input: {
     resolutionTime: input.resolutionTime,
     imageUrl: input.imageUrl,
     description: input.description,
-    category: "other",
+    category: resolveCategory(input.category ?? "other"),
   };
 }
 
