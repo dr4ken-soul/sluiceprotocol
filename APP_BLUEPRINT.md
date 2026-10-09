@@ -721,16 +721,82 @@ Sluice cannot prevent a Meteora exploit, cannot make Panta's market deep, and ca
 
 ## Hackathon Deliverables Checklist
 
-- [ ] Public GitHub repository, complete code, README with install and usage
-- [ ] Functional frontend end to end, no mock data, every figure a live chain read
-- [ ] Deployed on Solana mainnet
+Status markers are load-bearing. A bare `- [ ]` says "not started". A `- [~]` says
+"partly built, and here is precisely what is missing", which is the distinction that
+let a Phase 0 item go unbuilt for a week without anyone noticing. A `- [!]` says
+"cannot be delivered as specified", with the reason. Do not downgrade a marker to
+hide a gap; that is the failure this convention exists to prevent.
+
+- [x] Public GitHub repository, complete code, README with install and usage
+- [x] Functional frontend end to end, no mock data, every figure a live chain read
+- [!] ~~Deployed on Solana mainnet~~ **Deviation: devnet, not mainnet.** See below.
 - [ ] Demo video, 4 minutes maximum
 - [ ] X posts, see MARKETING.md
 - [ ] Colosseum submission, one product only, three chains selected at registration
 - [ ] Meteora DBC sidetrack, winners by 31 October 2026
 - [ ] CertiK submission by 13 October, needs public repo, programs with line counts, 6 to 12 month roadmap
-- [ ] Panta sidetrack
+- [~] Panta sidetrack. Client, resolver and trade attribution built. See below.
 - [ ] Superteam Nigeria, working prototype plus three pitch reviews plus demo day
+
+### Deviation: devnet instead of mainnet
+
+**Specified:** deployed on Solana mainnet, all eight programs verified on Solscan.
+**Shipping:** devnet. **Reason:** deployment is unfunded.
+
+Measured with the Solana 1.17.34 CLI, the rent-exempt minimum on a program data
+account is charged per byte of compiled bytecode:
+
+| Bytecode | Rent-exempt minimum |
+|---|---|
+| 150 KB | 0.78 SOL |
+| 250 KB | 1.30 SOL |
+| 350 KB | 1.82 SOL |
+
+Eight programmes is therefore 6 to 15 SOL in rent before a single fee. The builder
+cannot fund that before the 12 October deadline. `strip = "symbols"`,
+`panic = "abort"` and `opt-level = "z"` are set in `programs/Cargo.toml` to reduce
+the figure, which is a real reduction but not one that closes a 10x gap.
+
+**This does not disqualify the submission.** The official Crypto World's Fair rules
+name three judging criteria — functionality, potential impact, novelty — and impose
+no network requirement. The Solana track pays $10,000 per winning project, which at
+current prices is roughly 87 SOL and funds the mainnet deploy outright. Colosseum's
+own accelerator cohort announcement describes winners progressing "from devnet to
+mainnet".
+
+The remaining requirement is honesty in the submission: **state devnet plainly.** A
+mainnet claim that Solscan cannot corroborate is the one failure that would
+disqualify the entry.
+
+### Panta: what is built and what is not
+
+**Built** in `indexer/src/panta.ts` and `indexer/src/adjudication.ts`:
+
+- Market creation, quote to build to register, per Panta's documented flow
+- Market reads, including YES and NO prices and resolved state
+- Primary-share buy: quote, build, submit
+- **Trade attribution**, which is what `MARKETING.md` requires explicitly and what
+  earns the creator fee on Sluice's own markets
+- The four-gate resolver: unconfigured, unreachable, unresolved, and below the
+  500 USDC depth floor each fall back to the named verifier, and to default-no on
+  verifier silence
+
+23 tests cover the resolver, including that a resolved, deep market decides and
+that a thin one never can.
+
+**Not built, and not claimable:**
+
+- **No `PANTA_API_KEY` exists.** A key must be minted at
+  `https://docs.panta.market/guides/authentication` before any of the above can be
+  exercised against the live API. Until then `/api/resolver` reports
+  `configured: false` and every milestone resolves through the internal fallback.
+- **No market has been created.** Market creation is untested against the real API;
+  the tests use a stubbed fetch.
+- **The Panta sidetrack cannot be submitted on this basis.** Its first criterion is
+  API integration depth and the checklist demands trade attribution wired end to
+  end. Claiming it without a key and a live market would be a false claim on a track
+  built to check exactly that.
+
 
 ---
 

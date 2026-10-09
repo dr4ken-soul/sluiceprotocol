@@ -9,6 +9,7 @@
 
 import cors from "@fastify/cors";
 import Fastify from "fastify";
+import { pantaConfigured } from "./adjudication.ts";
 import { registerRoutes } from "./api/routes.ts";
 import { loadConfig, programsDeployed } from "./config.ts";
 import { subscribe } from "./grpc.ts";
@@ -42,6 +43,29 @@ async function main(): Promise<void> {
   const deployed = programsDeployed(config);
   console.log(`[sluice] api listening on ${config.host}:${config.port}`);
   console.log(`[sluice] cluster ${config.network}, demo mode ${config.demoMode}`);
+
+  /*
+   * The external resolver's availability is reported at boot rather than discovered
+   * at the first milestone.
+   *
+   * `APP_BLUEPRINT.md` §7 specifies an internal market as the fallback when Panta
+   * cannot be trusted, so an unconfigured resolver is a degraded mode rather than a
+   * failure and the indexer boots either way. Saying so once, here, means an
+   * operator can tell the difference between "no milestones yet" and "milestones
+   * will all resolve through the fallback" without reading logs from a demo.
+   */
+  console.log(
+    pantaConfigured(config)
+      ? `[sluice] panta resolver configured, wallet ${config.panta.marketWallet ?? "UNSET"}`
+      : "[sluice] PANTA_API_KEY is not set. Milestones resolve through the verifier " +
+          "and then default to no, which is the documented fallback.",
+  );
+  if (pantaConfigured(config) && config.panta.marketWallet === null) {
+    console.warn(
+      "[sluice] PANTA_API_KEY is set but PANTA_MARKET_WALLET is not. " +
+        "Markets cannot be opened or fees paid without a wallet.",
+    );
+  }
 
   if (!deployed) {
     // Named explicitly, because an indexer pointed at nothing and an indexer

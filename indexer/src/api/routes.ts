@@ -12,6 +12,7 @@
  */
 
 import type { FastifyInstance } from "fastify";
+import { DEPTH_FLOOR_USDC, pantaConfigured } from "../adjudication.ts";
 import type { Config } from "../config.ts";
 import { programsDeployed } from "../config.ts";
 import { selectFeatured } from "../featured.ts";
@@ -60,6 +61,28 @@ export function registerRoutes(app: FastifyInstance, config: Config, store: Inde
        */
       health: { ...store.health(), network: config.network },
       asOf: Math.floor(Date.now() / 1000),
+    };
+  });
+
+  /**
+   * The external resolver's status.
+   *
+   * Reported separately from stream health because they fail independently: the
+   * chain subscription can be perfectly healthy while Panta is unavailable, and the
+   * two degrade to different fallbacks. The frontend uses this to tell a reader
+   * whether a milestone will be decided by a market or by the internal one, which
+   * is a material difference to anyone assessing whether a resolution is credible.
+   */
+  app.get("/api/resolver", async () => {
+    const configured = pantaConfigured(config);
+    return {
+      configured,
+      source: configured ? "panta" : "internal",
+      wallet: config.panta.marketWallet,
+      depthFloorUsdc: DEPTH_FLOOR_USDC,
+      note: configured
+        ? "Milestones resolve from a Panta market that clears the depth floor."
+        : "Panta is unconfigured. Milestones resolve from the named verifier, and default to no on silence.",
     };
   });
 

@@ -580,8 +580,15 @@ Sluice issues claims on real-world cash flow, invoices, royalties and revenue, a
 
 **Checklist:**
 
-- [ ] Public GitHub repo, complete code, README with install and usage
-- [ ] Deployed on Solana mainnet, all eight programs verified on Solscan
+Marker meanings are defined in `APP_BLUEPRINT.md` §Hackathon Deliverables Checklist:
+`[x]` done, `[~]` partly built with the gap stated, `[!]` cannot be delivered as
+written, with the reason. Do not mark a track eligible on the strength of code alone
+when that track's criteria require something live.
+
+**Checklist:**
+
+- [x] Public GitHub repo, complete code, README with install and usage
+- [!] ~~Deployed on Solana mainnet, all eight programs verified on Solscan~~ **Deviation: devnet.** Deployment is unfunded: 8 programmes cost 6 to 15 SOL in rent-exempt minimum, measured per byte of bytecode with the Solana CLI. Colosseum's rules impose no network requirement, and a Solana track prize funds mainnet outright. State devnet plainly in every submission and post. Full reasoning in `APP_BLUEPRINT.md`.
 - [ ] Demo video recorded, under 4 minutes, leading with the adjudication screen
 - [ ] Colosseum submission, one product only, three chains selected at registration
 - [ ] Adevar post published using their supplied copy, @AdevarLabs followed
@@ -589,8 +596,8 @@ Sluice issues claims on real-world cash flow, invoices, royalties and revenue, a
 - [ ] RPC Fast: 2 to 3 posts per month sustained for two months
 - [ ] Superteam NG: registered on Colosseum marking Nigeria, submitted to the Solana ecosystem track
 - [ ] Superteam NG: 3 pitch reviews attended, demo day attended
-- [ ] Panta: working demo plus a written explanation of the API integration, in English
-- [ ] Panta: trade attribution wired in, not just market creation and trading
+- [~] Panta: working demo plus a written explanation of the API integration, in English. Client, resolver and attribution are written and unit-tested, but **no `PANTA_API_KEY` exists**, so nothing has been exercised against the live API and no market has been created.
+- [~] Panta: trade attribution wired in, not just market creation and trading. `reportTrade` is implemented and idempotent, and it is what earns the creator fee. Untested live, for the same reason.
 - [ ] Meteora: repo public, or `dannxbt` added with Read permissions
 - [ ] Meteora sidetrack, winners by 31 October 2026
 - [ ] CertiK submission by 13 October, needs public repo, programs with line counts, 6 to 12 month roadmap, team details, fundraising status, Telegram or email for the scoping call

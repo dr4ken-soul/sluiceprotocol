@@ -34,6 +34,25 @@ export interface Config {
    * Flipping this is an indexer restart, never a program redeploy.
    */
   readonly demoMode: boolean;
+  /**
+   * Panta prediction-market credentials.
+   *
+   * Absent means the external resolver is unavailable and every milestone falls
+   * back to the internal market, which `APP_BLUEPRINT.md` §7 specifies as the
+   * behaviour when an external market cannot be trusted. It is never fatal, so the
+   * indexer boots without it.
+   *
+   * `PANTA_API_KEY` is deliberately not `NEXT_PUBLIC_`-prefixed. It authenticates
+   * writes, including market creation and trade attribution, and a prefixed name
+   * would inline it into the browser bundle.
+   */
+  readonly panta: {
+    readonly apiKey: string | null;
+    /** The wallet that pays market creation fees and signs milestone markets. */
+    readonly marketWallet: string | null;
+    /** Default category for a milestone question. RWA milestones are `other`. */
+    readonly category: string;
+  };
   /** Fixed fee rates, read from the environment and never hardcoded here. */
   readonly fees: {
     readonly curveBps: number;
@@ -131,6 +150,11 @@ export function loadConfig(): Config {
       autopilot: readProgram("NEXT_PUBLIC_AUTOPILOT_PROGRAM_ID"),
     },
     demoMode: readBool("NEXT_PUBLIC_DEMO_MODE", true),
+    panta: {
+      apiKey: read("PANTA_API_KEY") ?? null,
+      marketWallet: read("PANTA_MARKET_WALLET") ?? null,
+      category: read("PANTA_CATEGORY") ?? "other",
+    },
     fees: {
       curveBps: readInt("NEXT_PUBLIC_FEE_CURVE_BPS", 30),
       milestoneMarketBps: readInt("NEXT_PUBLIC_FEE_MILESTONEMKT_BPS", 50),
