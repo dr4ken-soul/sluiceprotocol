@@ -11,7 +11,9 @@
 import { RouteErrorBoundary } from "@/components/layout/RouteErrorBoundary";
 import { Hero } from "@/components/sections/Hero";
 import { Problem } from "@/components/sections/Problem";
+import { Groups } from "@/components/sections/Groups";
 import { Mechanism } from "@/components/sections/Mechanism";
+import { Ladder } from "@/components/sections/Ladder";
 import { Marketplace } from "@/components/sections/Marketplace";
 import { Adjudication } from "@/components/sections/Adjudication";
 import { Compliance } from "@/components/sections/Compliance";
@@ -24,9 +26,17 @@ export default function LandingPage() {
       <RouteErrorBoundary>
         {/* The skip link targets this, so it is the one focusable landmark. */}
         <main id="main">
+          {/*
+            Ten sections, in the order `CLAUDE.md` fixes. Groups is third and The
+            Ladder is fifth, and the order matters: the Ladder is the argument that
+            these are one protocol, so it has to arrive after both products have been
+            named and before the proof sections start.
+          */}
           <Hero />
           <Problem />
+          <Groups />
           <Mechanism />
+          <Ladder />
           <Marketplace />
           <Adjudication />
           <Compliance />
