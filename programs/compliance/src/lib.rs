@@ -372,17 +372,21 @@ pub struct Graduate<'info> {
     /// The curve authority. Must sign, so graduation cannot be triggered by a
     /// third party mid-raise.
     pub authority: Signer<'info>,
-    /// The mint.
+    /// The mint being graduated.
+    /// CHECK: Referenced by the hook state, which is the authority on stage.
+    ///
+    /// Declared before `hook_state` because the seed constraint on `hook_state`
+    /// reads `mint.key()`. Account field order in a `#[derive(Accounts)]` struct is
+    /// the declaration order, so the borrow has to be declared first.
+    #[account(mut)]
+    pub mint: UncheckedAccount<'info>,
+    /// The hook state whose stage is advanced.
     #[account(
         mut,
         seeds = [b"hook", mint.key().as_ref()],
         bump = hook_state.bump,
     )]
     pub hook_state: Account<'info, HookState>,
-    /// The mint being graduated.
-    /// CHECK: Referenced by the hook state, which is the authority on stage.
-    #[account(mut)]
-    pub mint: UncheckedAccount<'info>,
 }
 
 /// Accounts for [`sluice_compliance::attest`].

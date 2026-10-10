@@ -229,6 +229,13 @@ fn handle_open_issuance(ctx: Context<OpenIssuance>) -> Result<()> {
 #[derive(Accounts)]
 pub struct CreateIssuance<'info> {
     /// The issuer. Must sign.
+    ///
+    /// `mut` because it pays the rent for the issuance account created below. It
+    /// was not declared mutable, and Anchor requires the payer of an `init` account
+    /// to be writable, so this could not have compiled either. The issuer's SOL
+    /// balance is debited by the rent-exempt deposit, which is the only way this
+    /// account ever moves.
+    #[account(mut)]
     pub issuer: Signer<'info>,
     /// The token mint the issuance will trade.
     /// CHECK: Read into the issuance at creation. The curve program does not mint,

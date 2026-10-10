@@ -130,9 +130,14 @@ pub fn reconcile(breakdowns: &[ClaimBreakdown]) -> Option<u128> {
     Some(total)
 }
 
-#[cfg(test)]
 /// Redemption claims are charged at 0.25 percent, the lowest percentage fee in
 /// the protocol on purpose. This user's milestone just failed.
+///
+/// Not behind `#[cfg(test)]`. `redemption/src/lib.rs` imports this for a non-test
+/// build to price a claim, and an attribute here binds to the *next* item, so
+/// marking this one test-only left it undefined in release and silently extended the
+/// attribute to the const below it. `tsc`-equivalent checks do not catch it because
+/// the crate has never been compiled for the SBF target.
 pub const REDEMPTION_BPS: u32 = 25;
 
 /// Waterfall claims are charged at 0.50 percent, and only when a distribution

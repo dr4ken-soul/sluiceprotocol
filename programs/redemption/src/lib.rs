@@ -16,7 +16,7 @@ use anchor_lang::prelude::*;
 
 pub mod state;
 
-use state::{RedemptionVault, RedemptionVaultState};
+use state::{MilestoneRef, Outcome, RedemptionVault, RedemptionVaultState};
 
 /// Redemption claims are charged at 0.25 percent.
 pub const REDEMPTION_FEE_BPS: u32 = sluice_core_math::pro_rata::REDEMPTION_BPS;
@@ -99,7 +99,7 @@ fn handle_init_vault(
     pot: u64,
     total_supply: u64,
 ) -> Result<()> {
-    if ctx.accounts.milestone.outcome != state::Outcome::No as u8 {
+    if ctx.accounts.milestone.outcome != Outcome::No as u8 {
         return err!(SluiceRedemptionError::MilestoneNotFailed);
     }
     if tranche_index >= ctx.accounts.milestone.index {
@@ -185,7 +185,7 @@ pub struct InitVault<'info> {
         seeds = [b"milestone", milestone.issuance.as_ref(), &milestone.index.to_le_bytes()],
         bump = milestone.bump,
     )]
-    pub milestone: Account<'info, crate::state::MilestoneRef>,
+    pub milestone: Account<'info, MilestoneRef>,
     /// The vault being created.
     #[account(
         init,

@@ -44,6 +44,13 @@ pub enum SluiceBondError {
     BelowThreshold = 8,
     /// The allocation shares did not sum to one hundred percent.
     AllocationMismatch = 9,
+    /// A multiplication or addition overflowed.
+    ///
+    /// Appended at 10 rather than inserted, because Anchor error codes are
+    /// positional and every existing variant already has an assigned discriminant.
+    /// The variant was referenced at four call sites in the founder-draw split with
+    /// no declaration at all, which is why the crate could not compile.
+    ArithmeticOverflow = 10,
 }
 
 #[program]
@@ -317,7 +324,22 @@ pub struct PostBond<'info> {
     /// CHECK: The escrow account is derived from this mint below.
     #[account(mut)]
     pub mint: UncheckedAccount<'info>,
-    /// The bond escrow.
+    /// The token account holding the escrowed bond.
+    ///
+    /// Was missing entirely. `handle_post_bond` writes
+    /// `ctx.accounts.escrow.key()` into the vault, so the instruction could never
+    /// have compiled, and had it been made to compile by deleting the write the bond
+    /// would have been recorded with no escrow at all, which is the one field that
+    /// makes a bond slashable. Anchor would have rejected the field either way; the
+    /// write existing without the account is the bug.
+    ///
+    /// Left as an unchecked account rather than a token interface type, matching the
+    /// rest of this file, because the slash path is where the escrow is spent and
+    /// that path is the one place the owner should be verified rather than assumed.
+    /// The slash instruction is where the token constraint belongs.
+    #[account(mut)]
+    pub escrow: UncheckedAccount<'info>,
+    /// The bond escrow record.
     #[account(
         init,
         payer = issuer,

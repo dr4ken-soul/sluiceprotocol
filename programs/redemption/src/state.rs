@@ -2,6 +2,45 @@
 
 use anchor_lang::prelude::*;
 
+/// How a milestone resolved.
+///
+/// Mirrors `verifier::state::Outcome` rather than importing it, so the redemption
+/// program does not take a dependency on the verifier program for a two-byte
+/// discriminant. The discriminants must stay identical because both programs read
+/// the same milestone account, and a divergence would mean a vault opened against
+/// a milestone that resolved yes.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Outcome {
+    /// Not yet resolved. A vault cannot be opened against this.
+    Unresolved = 0,
+    /// The milestone was met. Capital releases; nothing is redeemed.
+    Yes = 1,
+    /// The milestone failed. Capital routes to a redemption vault.
+    No = 2,
+}
+
+/// A read-only view of a milestone owned by the verifier program.
+///
+/// Redemption reads milestones but must not be able to write them, so it declares a
+/// minimal projection of the account and validates it by seeds and bump. Only the
+/// fields a redemption decision depends on are carried; anything else is a field
+/// this program has no business reading.
+#[account]
+#[derive(Debug, Default)]
+pub struct MilestoneRef {
+    /// Outcome discriminant. See [`Outcome`].
+    pub outcome: u8,
+    /// Unix seconds the market closed.
+    pub deadline: i64,
+    /// Tranche index within the issuance.
+    pub index: u8,
+}
+
+impl MilestoneRef {
+    /// Account space: one byte outcome, one i64 deadline, one byte index.
+    pub const INIT_SPACE: usize = 1 + 8 + 1;
+}
+
 /// Lifecycle of a redemption vault.
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
 pub enum RedemptionVaultState {

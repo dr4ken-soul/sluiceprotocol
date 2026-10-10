@@ -100,14 +100,24 @@ pub struct Issuance {
 
 impl Issuance {
     /// Account space, matching the field order exactly.
-    pub const INIT_SPACE: usize = 32 * 5 // issuer, mint, curve_config, policy, bond_vault
-        + 32 * 2 // settlement, redemption_vault, attestor
-        + 8 // ticker
-        + 1 // asset_class
-        + 8 * 7 // nav_low, nav_high, attested_nav, raised, target
-        + 8 // attested_at
-        + 8 // created_at
-        + 1; // state
+    ///
+    /// The previous figure came to 306 while the fields actually occupy 323, so
+    /// `create_issuance` would have allocated an account too small to hold its own
+    /// struct. Anchor does not verify this at compile time; it surfaces as a
+    /// deserialisation failure on the first read, long after deployment, which is
+    /// the worst time to find it.
+    ///
+    /// Counted field by field rather than approximated:
+    ///
+    ///   8 Pubkey  x 32 = 256   issuer, mint, attestor, curve_config, policy,
+    ///                           bond_vault, settlement, redemption_vault
+    ///   7 scalar  x  8 =  56   nav_low, nav_high, attested_nav, raised, target,
+    ///                           attested_at, created_at
+    ///   1 ticker  x  8 =   8   [u8; 8]
+    ///   3 byte            =   3   asset_class, state, bump
+    ///                        ---
+    ///                          323
+    pub const INIT_SPACE: usize = 32 * 8 + 8 * 7 + 8 + 1 + 1 + 1;
 }
 
 /// The derived sixteen segment curve for one issuance.
