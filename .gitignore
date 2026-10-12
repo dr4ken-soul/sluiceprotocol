@@ -50,3 +50,7 @@ logs/
 # mint a code that verifies. It lives on Vercel as BETA_INVITE_SECRET and in the
 # operator's password manager, not in the repository.
 .invite-secret
+
+# The operator pass phrase for /admin. Same reasoning as .invite-secret: it is a live
+# credential and it belongs in a password manager, not in a repository.
+.admin-pass

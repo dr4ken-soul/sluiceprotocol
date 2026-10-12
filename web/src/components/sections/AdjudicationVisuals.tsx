@@ -212,13 +212,22 @@ export function ResolutionVisual({ className }: VisualProps) {
         fill="var(--bg-primary)"
       />
 
-      {/* The shared spine. */}
+      {/*
+        The spine, and the three nodes on it.
+
+        Labels sit ABOVE the line, not below. They used to sit below at a fixed
+        x - 34, which was wrong twice over: the offset assumed every label was the
+        same width, so "Grace ends" sat under the node but "Resolution" sat far to
+        its left, and both branches leave this node heading downward, so a label
+        underneath it was always going to land on a curve. Above the spine is the
+        one region of the diagram nothing is drawn in.
+      */}
       <path d="M40 80h330" stroke="var(--border-subtle)" strokeWidth="1.5" />
 
       {[
         { x: 60, label: "Deadline", accent: false },
-        { x: 180, label: "Grace ends", accent: false },
-        { x: 300, label: "Resolution", accent: true },
+        { x: 190, label: "Grace ends", accent: false },
+        { x: 320, label: "Resolution", accent: true },
       ].map((node) => (
         <g key={node.label}>
           <circle
@@ -230,8 +239,9 @@ export function ResolutionVisual({ className }: VisualProps) {
             strokeWidth="1.5"
           />
           <text
-            x={node.x - 34}
-            y="106"
+            x={node.x}
+            y="62"
+            textAnchor="middle"
             fill="var(--text-muted)"
             fontFamily="var(--font-mono)"
             fontSize="9"
@@ -241,24 +251,53 @@ export function ResolutionVisual({ className }: VisualProps) {
         </g>
       ))}
 
-      {/* The reported branch. The accent sits on this path only. */}
+      {/*
+        The reported branch. The accent sits on this path only, and it flows.
+
+        `strokeDasharray` is set so there is something for the dash offset to move
+        along. Without a dash pattern an offset animation is invisible, because the
+        stroke is solid and re-positioning an invisible gap changes nothing.
+      */}
       <path
-        d="M180 80c0 40 40 40 80 40h40"
+        d="M190 80c0 44 40 44 90 44h60"
+        className="sluice-flow"
         stroke="var(--accent)"
         strokeWidth="1.5"
+        strokeDasharray="6 4"
+        strokeLinecap="round"
       />
-      <text x="196" y="152" fill="var(--accent-text)" fontFamily="var(--font-mono)" fontSize="10">
+      <text
+        x="340"
+        y="104"
+        textAnchor="middle"
+        fill="var(--accent-text)"
+        fontFamily="var(--font-mono)"
+        fontSize="10"
+      >
         YES, RELEASES
       </text>
 
-      {/* The default branch, which is what silence produces. */}
+      {/*
+        The default branch, which is what silence produces. Dashed and slow, and it
+        travels the same direction, so the diagram reads as one timeline with two
+        endings rather than as two unrelated shapes.
+      */}
       <path
-        d="M180 80c0 70 40 110 80 110h100"
+        d="M190 80c0 74 40 112 90 112h110"
+        className="sluice-flow sluice-flow--slow"
         stroke="var(--text-muted)"
         strokeWidth="1.5"
-        strokeDasharray="4 4"
+        strokeDasharray="3 7"
+        strokeLinecap="round"
       />
-      <text x="150" y="222" fill="var(--text-muted)" fontFamily="var(--font-mono)" fontSize="10">
+      <text
+        x="286"
+        y="214"
+        textAnchor="middle"
+        fill="var(--text-muted)"
+        fontFamily="var(--font-mono)"
+        fontSize="10"
+      >
         SILENCE, NO, REDEEMS
       </text>
 

@@ -253,7 +253,7 @@ export function WaitlistForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-intent" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          What would you issue or fund <span className="normal-case">— optional</span>
+          What would you issue or fund <span className="normal-case">(optional)</span>
         </label>
         <textarea
           id="wl-intent"
@@ -277,7 +277,7 @@ export function WaitlistForm() {
       */}
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-region" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Where you are <span className="normal-case">— town or country, optional</span>
+          Where you are <span className="normal-case">(town or country, optional)</span>
         </label>
         <input
           id="wl-region"
@@ -291,7 +291,7 @@ export function WaitlistForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-mm" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Mobile money you already use <span className="normal-case">— optional</span>
+          Mobile money you already use <span className="normal-case">(optional)</span>
         </label>
         <input
           id="wl-mm"
@@ -302,9 +302,7 @@ export function WaitlistForm() {
           className={FIELD}
         />
         <p className="font-body text-xs leading-relaxed text-[var(--text-muted)]">
-          This one is the reason we ask. Saving circles work because trust is already
-          there. Moving the money is the part nobody has solved, and the rails you
-          already hold decide whether any of this is usable by you.
+          This one is the reason we ask. Saving circles already work because the trust is there; moving the money is the part nobody has solved, so the rail you hold already decides whether any of this is usable by you at all.
         </p>
       </div>
 
@@ -357,7 +355,7 @@ export function WaitlistForm() {
       */}
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-wallet" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Solana wallet <span className="normal-case">— leave blank if you do not have one</span>
+          Solana wallet <span className="normal-case">(leave blank if you do not have one)</span>
         </label>
         <input
           id="wl-wallet"
@@ -402,9 +400,7 @@ export function WaitlistForm() {
           {phase === "submitting" ? "Saving your place" : "Join the waitlist"}
         </button>
         <p className="font-body text-xs leading-relaxed text-[var(--text-muted)]">
-          One email, sent when the next piece opens. No newsletter, no sequences, no
-          drip campaign. You can ask to be removed with a reply and it is done
-          immediately.
+          One email, when the next piece opens, nothing else: no newsletter, no sequence, no drip campaign. Reply to it and you are removed, immediately.
         </p>
       </div>
     </form>

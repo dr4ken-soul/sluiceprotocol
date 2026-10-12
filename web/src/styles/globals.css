@@ -154,3 +154,39 @@ body {
   left: 1rem;
   top: 1rem;
 }
+
+/*
+ * Flow animation for the mechanism diagrams.
+ *
+ * Drawn on the SVG paths themselves rather than with motion/react, because a
+ * stroke-dashoffset is a paint-time property and animating it through the React
+ * tree would re-render on every frame for something that never changes the DOM.
+ *
+ * The dashed silence path marches in its own direction to the solid one. Both are
+ * travelling right, because both resolve left to right, but one is slow and even
+ * and the other is dotted and urgent, and that difference is the whole point of
+ * the diagram.
+ */
+@keyframes sluice-flow-right {
+  to { stroke-dashoffset: -100; }
+}
+
+.sluice-flow {
+  animation: sluice-flow-right 4s linear infinite;
+}
+
+.sluice-flow--slow {
+  animation-duration: 8s;
+}
+
+/*
+ * Honours the OS setting rather than the user's memory of the site. Someone who
+ * turned motion off at the system level did not do it so that one page could
+ * ignore them.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .sluice-flow,
+  .sluice-flow--slow {
+    animation: none;
+  }
+}
