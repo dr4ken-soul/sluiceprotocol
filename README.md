@@ -15,6 +15,47 @@ verifier fails to report inside the grace window, the tranche resolves no by def
 
 Built for Colosseum Crypto World's Fair.
 
+## Status
+
+**Sluice is a devnet beta. It is not open, and this repository does not pretend
+otherwise.** Everything below describes the design and the code as written. Here is
+what that means concretely:
+
+| | State |
+|---|---|
+| Frontend | Deployed and live at [sluice-beryl.vercel.app](https://sluice-beryl.vercel.app) |
+| Indexer | Deployed at `sluice-indexer-production.up.railway.app`, on **devnet** |
+| Issuance surface | Working end to end against a seeded demo fixture |
+| Groups | Not built. Phase 1. The routes exist and say so |
+| Rust programs | **Do not compile.** The dependency graph is unresolved, see below |
+| Network | Solana devnet. No mainnet deployment and none attempted |
+
+Three things are worth being blunt about before a judge reads further.
+
+**The programs do not build.** Solana 1.17.34 needs Rust 1.85 or older, and the
+lockfile floats to transitive crates that require `edition2024`, which that Rust
+cannot parse. The source has been written and six compile errors fixed, but nothing
+here has been compiled, tested against a validator, or deployed to any cluster. Treat
+the Rust as a design artifact that has not been run. `core-math` is the exception:
+it has no Solana dependencies, 83 unit tests pass on any toolchain, and it is where
+the arithmetic that decides where a holder's money goes actually lives.
+
+**The live frontend runs on a demo fixture.** No program is deployed, so there is
+nothing on any cluster to read. The indexer serves a seeded fixture and every
+surface it touches carries a visible DEMO tag. That tag is a requirement, not a
+decoration.
+
+**Groups is not built.** Savings circles between strangers are Phase 1 and are
+waiting on mobile money rails. `/app/groups`, `/app/groups/new` and
+`/app/circle/[address]` exist and answer with that explanation rather than a mockup
+or a dead link, because a nav entry that leads nowhere teaches a visitor the
+product's promises are not kept.
+
+The site takes a [waitlist](https://sluice-beryl.vercel.app/waitlist) rather than
+claiming availability. That is why the nav's primary action is "Join waitlist"
+instead of "Connect wallet".
+
+
 ## What is novel
 
 MetaDAO already ships launchpad plus futarchy plus Meteora DAMM v2, so that
@@ -52,7 +93,7 @@ programs/          Rust, Anchor 0.29.0, Solana 1.17.34
   autopilot/         DAMM v2 position split, DLMM ladder (deferred to Phase 2)
 indexer/           Yellowstone gRPC subscription, featured selection, public API
 web/               Next.js 14 App Router, TypeScript, Tailwind, motion/react
-supabase/          Draft storage migration
+supabase/          Postgres migrations: issuance drafts, then the waitlist
 ```
 
 ## Programme line counts
@@ -93,17 +134,43 @@ npm --prefix web install
 npm --prefix indexer install
 ```
 
+### Database
+
+The web app needs Postgres for issuance drafts and for the waitlist. Apply the
+migrations in order, in the Supabase SQL editor or via `supabase db push`:
+
+```
+supabase/migrations/0001_drafts.sql
+supabase/migrations/0002_draft_query_grant.sql
+supabase/migrations/0003_waitlist.sql
+```
+
+Both tables have row level security enabled with **no policies**, which is
+intentional. There is no anonymous read path to a waitlist: it is a list of who
+wants to be contacted, and that is not public information. The service role key is
+the only way in, and it never leaves the server.
+
 ### Programs
+
+> **These scripts currently fail.** `check.ps1` and `build-sbf.ps1` run
+> `cargo check`, which cannot resolve the workspace: Solana 1.17.34 requires Rust
+> 1.85 or older, and the lockfile floats to transitive crates that need
+> `edition2024`. `lockfile.ps1` rewrites the lockfile format version but does not
+> fix this. Running `cargo test -p sluice-core-math` on its own does work, and is
+> the honest way to verify the arithmetic.
 
 ```powershell
 # Regenerate the lock file, pinned to the Solana 1.17.34 toolchain.
 powershell -ExecutionPolicy Bypass -File .\programs\lockfile.ps1
 
-# Type-check every programme and run the core-math tests.
+# Type-check every programme and run the core-math tests. Currently fails, above.
 powershell -ExecutionPolicy Bypass -File .\programs\check.ps1
 
-# Build the SBF artefacts.
+# Build the SBF artefacts. Currently fails, above.
 powershell -ExecutionPolicy Bypass -File .\programs\build-sbf.ps1
+
+# What does work: the pure logic, on any toolchain.
+cargo test --manifest-path programs/Cargo.toml -p sluice-core-math
 ```
 
 `core-math` holds the arithmetic that decides where a holder's money goes: the
@@ -136,10 +203,16 @@ timestamp and address is set in Geist Mono. The full system is transcribed in
 `web/src/styles/globals.css`; components reference CSS custom properties and never a
 literal colour.
 
-The landing page is eight sections with eight distinct layout families and two
-eyebrows. The hero loop is ambient: the video owns its own timeline and scroll drives
-scale, opacity, translation and blur only. Scroll position never touches
-`video.currentTime`.
+The landing page is ten sections with ten distinct layout families: hero, problem,
+groups, mechanism, the ladder, marketplace, adjudication, compliance, metrics, and
+the closing call to action. The hero loop is ambient: the video owns its own timeline
+and scroll drives scale, opacity, translation and blur only. Scroll position never
+touches `video.currentTime`.
+
+Where a surface does not exist yet, it says so in its own words and links to the
+specification. No mockup, no example member, no invented pot total. The rule the
+groups section follows is worth stating as a rule rather than a preference: **a
+number on this site is either a chain read or it is not on this site.**
 
 ## Live data contract
 
@@ -150,8 +223,16 @@ carries a visible DEMO tag. Flipping demo mode is an indexer restart, never a
 programme redeploy.
 
 The frontend stores nothing in `localStorage` or `sessionStorage`. Issuance drafts
-autosave to the server through `POST /api/drafts`, keyed by user id, so a draft
+autosave to the server through `PUT /api/drafts`, keyed by user id, so a draft
 survives a cleared browser and follows the user to another device.
+
+The same rule governs the waitlist. `POST /api/waitlist` validates server-side and
+writes to Postgres. There is no counter, no seat count and no countdown on the
+waitlist page, because every instance of that furniture is a number somebody made
+up, and this project does not publish numbers it made up. A wallet address is
+optional and explicitly so: requiring one to join a list would exclude exactly the
+people the Groups design is for, who do not have one and are not going to make one
+to fill in a form.
 
 ## Fees
 
@@ -216,9 +297,9 @@ It is not a registered exchange and it does not provide legal advice.
 
 ## Repository
 
-Public. Superteam Nigeria scores submissions on whether or not they are open-sourced,
-and a public repository also removes the Meteora requirement to grant `dannxbt` Read
-access for judging.
+Public. Colosseum scores submissions partly on whether they are open-sourced, and a
+public repository also removes the Meteora requirement to grant a judge read access
+for reviewing.
 
 ## Licence
 
