@@ -38,9 +38,35 @@ const nextConfig = {
    * that returns the wrong shape. Draft autosave was silently inoperative, and for a
    * form with no `localStorage` fallback that means a long issuance is lost on any
    * interruption.
+   *
+   * `invite/` is here for the same reason and was also missed, with the same
+   * symptom: `GET /invite/ZZZZZZZZZZ` returned 200 carrying the landing page's
+   * markup and the root layout's `<meta name="robots" content="index, follow">`.
+   * Every invite link the project issues would have delivered a visitor to the
+   * homepage. It was only caught because the response was checked for the string the
+   * page was supposed to say, rather than for its status code, which was a
+   * perfectly healthy 200.
+   *
+   * ## THE RULE, for whoever adds the next route
+   *
+   * **Every dynamic route at the top level must appear in this lookahead.** Static
+   * top-level routes resolve before `rewrites` is consulted and are safe without
+   * being listed. Dynamic ones are not: the rewrite matches the shape of the path and
+   * never waits to find out whether a route exists, so `/invite/[code]` and
+   * `/app/asset/[ticker]` are swallowed in exactly the same way.
+   *
+   * Currently that is `app/`, `api/` and `invite/`. `waitlist` is static and needs no
+   * entry. If you add a dynamic route like `/market/[ticker]`, add `market/` here in
+   * the same commit, or it will 200 with the homepage's content and nothing will
+   * fail.
+   *
+   * The structural alternative, which this should become when there is time: delete
+   * this rewrite entirely and render the landing page from `not-found.tsx`, which
+   * already exists. Then unknown paths still get the branded page and there is no
+   * list of prefixes to keep in sync with the router.
    */
   async rewrites() {
-    return [{ source: "/((?!app/|api/).*)", destination: "/" }];
+    return [{ source: "/((?!app/|api/|invite/).*)", destination: "/" }];
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
