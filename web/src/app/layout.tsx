@@ -19,9 +19,17 @@ export const metadata: Metadata = {
   description:
     "Sluice issues invoices, royalties and revenue as tokens on Meteora. A binary market checks every milestone, and capital releases only when it resolves in the issuer's favour.",
   applicationName: "Sluice",
-  // No favicon is supplied yet. The slot is left empty rather than filled with a
-  // generated icon, because a placeholder mark reads as an unfinished build.
-  // favicon slot: replace with public/favicon.ico once provided
+  // The gate mark from Logo/, cut out of its own gradient background and trimmed to
+  // its bounding box. A favicon is the one piece of brand a visitor sees before they
+  // decide whether to read anything, so it is the real mark rather than a generated
+  // placeholder.
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
+  },
   robots: { index: true, follow: true },
   openGraph: {
     title: "Sluice",

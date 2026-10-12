@@ -29,9 +29,18 @@ const nextConfig = {
    * `/app` is a real route and is left alone; everything else falls back to the
    * branded page, which is what a host 404 would otherwise have replaced with an
    * ugly default.
+   *
+   * `/api` is excluded for the same reason, and it was missed at first, which is
+   * worth recording because the failure was silent. Verified against the deployment:
+   * `GET /api/drafts/<id>` answered 405 instead of the draft route's own 404-for-no-
+   * draft. A rewrite that swallows the API does not throw, it returns whatever it
+   * rewrote to, so the symptom is a write that appears to have succeeded and a read
+   * that returns the wrong shape. Draft autosave was silently inoperative, and for a
+   * form with no `localStorage` fallback that means a long issuance is lost on any
+   * interruption.
    */
   async rewrites() {
-    return [{ source: "/((?!app/).*)", destination: "/" }];
+    return [{ source: "/((?!app/|api/).*)", destination: "/" }];
   },
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],

@@ -20,7 +20,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "./useSession";
-import { ConnectButton } from "./ConnectModal";
+import { WaitlistButton } from "./WaitlistButton";
 import { WalletPill } from "./WalletPill";
 
 /** Centre links. Hidden below `md`, where the hamburger takes over. */
@@ -148,7 +148,7 @@ export function Nav() {
             {session.authenticated ? (
               <WalletPill />
             ) : (
-              <ConnectButton />
+              <WaitlistButton />
             )}
 
             {!isApp ? (
