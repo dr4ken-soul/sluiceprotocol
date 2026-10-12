@@ -18,6 +18,7 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  fetchCircles,
   fetchHealth,
   fetchHoldings,
   fetchIssuanceByTicker,
@@ -28,6 +29,7 @@ import {
   IndexerError,
 } from "@/lib/api";
 import type {
+  Circle,
   Holding,
   LiveIssuance,
   MarketplaceSnapshot,
@@ -221,4 +223,23 @@ export function useDraftAutosave(
   }, [serialised, userId, enabled, flush]);
 
   return { status, savedAt };
+}
+
+/**
+ * The caller's circles.
+ *
+ * Same shape and same staleness rules as every other live read, so the Groups
+ * surface degrades identically to the rest of the app rather than inventing its own
+ * conventions. Groups is Phase 1, so this currently resolves to an empty list; when
+ * the `circle` program ships the query populates with no change here.
+ */
+export function useCircles(): UseQueryResult<Circle[], IndexerError> {
+  return useQuery({
+    queryKey: ["circles"],
+    queryFn: ({ signal }) => fetchCircles(signal),
+    staleTime: STALE_MS,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    retry: 2,
+  });
 }

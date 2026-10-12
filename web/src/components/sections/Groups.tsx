@@ -25,6 +25,8 @@
  */
 
 import { motion } from "motion/react";
+import { useCircles } from "@/hooks/useLiveData";
+import { CircleRing } from "@/components/sections/CircleRing";
 
 /** One of the three rows. Icon paths are inline SVG; no icon package is installed. */
 interface Row {
@@ -58,10 +60,16 @@ const ROWS: readonly Row[] = [
   },
 ] as const;
 
-/** Nodes drawn in the ring. The count is a shape, not a headcount. */
-const RING_NODES = 12;
 
 export function Groups() {
+  /*
+   * Live circles, read through the same hook and the same degradation as every other
+   * figure on the page. Groups is Phase 1 so this is empty today; when the `circle`
+   * program ships the section fills in with no change to this file's logic.
+   */
+  const { data: circles } = useCircles();
+  const featured = circles?.[0];
+
   return (
     <section
       data-section-name="Groups"
@@ -164,73 +172,39 @@ export function Groups() {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className="overflow-hidden rounded-[--radius-lg] border border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-            <svg
-              viewBox="0 0 320 320"
-              className="block h-auto w-full"
-              role="img"
-              aria-label="Diagram of a savings circle: members arranged in a ring, rotating through one pot per cycle."
-            >
-              <title>
-                A savings circle, shown as a ring of members taking one pot in rotation
-              </title>
-              <circle
-                cx="160"
-                cy="160"
-                r="104"
-                fill="none"
-                stroke="var(--border-default)"
-                strokeWidth="1"
-              />
-              {Array.from({ length: RING_NODES }, (_, i) => {
-                const angle = (i / RING_NODES) * Math.PI * 2 - Math.PI / 2;
-                return (
-                  <motion.circle
-                    key={i}
-                    cx={160 + Math.cos(angle) * 104}
-                    cy={160 + Math.sin(angle) * 104}
-                    r="9"
-                    initial={{ fill: "var(--bg-elevated)", opacity: 0.5 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      duration: 0.4,
-                      delay: 0.25 + i * 0.06,
-                      ease: "easeOut",
-                    }}
-                    fill={
-                      i < 4
-                        ? "var(--success)"
-                        : i === 4
-                          ? "var(--accent)"
-                          : "var(--bg-elevated)"
-                    }
-                    stroke={i === 4 ? "var(--accent)" : "var(--border-default)"}
-                    strokeWidth={i === 4 ? 1.5 : 1}
-                  />
-                );
-              })}
-              {/* Current position marked by a ring outside the node, per §4A. */}
-              <motion.circle
-                cx={160}
-                cy={56}
-                r="15"
-                fill="none"
-                stroke="var(--accent)"
-                strokeWidth="1"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: 0.6, ease: "easeOut" }}
-              />
-            </svg>
+            <div className="flex items-center justify-center p-8">
+              {/*
+                Live circles render their real figures here. There are none yet
+                because Groups is Phase 1, so the ring draws the shape alone rather
+                than a fixture, and the caption says which is which.
+              */}
+              <CircleRing circle={featured} size={264} />
+            </div>
 
-            <figcaption className="border-t border-[var(--border-subtle)] px-5 py-4">
-              <p className="font-body text-[11px] leading-relaxed text-[var(--text-muted)]">
-                Diagram. A live circle would show its cycle, its pot and who has
-                contributed. Those are read from chain, so nothing is drawn here that
-                Sluice cannot prove.
-              </p>
-            </figcaption>
+            {featured ? (
+              <div className="border-t border-[var(--border-subtle)] px-5 py-4">
+                <p className="font-mono text-sm text-[var(--text-primary)]">
+                  {featured.contributedThisCycle} of {featured.memberCount} contributed
+                  this cycle
+                </p>
+                <div className="mt-3 h-[1.5px] w-full bg-[var(--bg-elevated)]">
+                  <div
+                    className="h-full bg-[var(--accent)]"
+                    style={{
+                      width: `${(featured.contributedThisCycle / Math.max(1, featured.memberCount)) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <figcaption className="border-t border-[var(--border-subtle)] px-5 py-4">
+                <p className="font-body text-[11px] leading-relaxed text-[var(--text-muted)]">
+                  Diagram. A live circle would show its cycle, its pot and who has
+                  contributed. Those are read from chain, so nothing is drawn here that
+                  Sluice cannot prove.
+                </p>
+              </figcaption>
+            )}
           </div>
         </motion.figure>
       </div>

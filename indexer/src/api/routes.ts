@@ -103,6 +103,26 @@ export function registerRoutes(app: FastifyInstance, config: Config, store: Inde
   app.get("/api/metrics", async () => store.metrics());
 
   /**
+   * Circles.
+   *
+   * Returns an empty list with a reason, never a fixture. Groups is Phase 1 and the
+   * `circle` and `group_bond` programs do not exist yet, so there is nothing on any
+   * cluster for this to read and anything it returned would be invented. `TEAM_OPS.md`
+   * §1.2 makes a placeholder worse than an absence, and `FRONTEND_SPEC.md` §14A.4
+   * requires the "coming next" state to render with zero invented data.
+   *
+   * The shape is the real one from `APP_BLUEPRINT.md` §Groups, so that when the
+   * programs ship this route becomes a decoder rather than a redesign, and the
+   * frontend hook needs no change at that point.
+   */
+  app.get("/api/circles", async () => ({
+    circles: [],
+    reason:
+      "Groups is Phase 1. The circle and group_bond programs are not deployed, so there is no circle state to read.",
+    phase: "phase-1",
+  }));
+
+  /**
    * Stream health.
    *
    * The degradation note is the point of this route. A terminal that has fallen back

@@ -78,6 +78,34 @@ export interface Holding {
   readonly state: IssuanceState;
 }
 
+/**
+ * A savings circle.
+ *
+ * Groups is Phase 1 and the `circle` program is not deployed, so nothing populates
+ * this yet. The shape is taken from `APP_BLUEPRINT.md` §Groups rather than
+ * invented here, so that when the program ships this is a decoder and not a
+ * redesign. Until then the hook returns an empty list and the section says Groups
+ * has not shipped, which is what `FRONTEND_SPEC.md` §14A.4 requires.
+ */
+export interface Circle {
+  readonly address: string;
+  readonly name: string;
+  readonly contributionUsdc: number;
+  readonly memberCount: number;
+  readonly membersJoined: number;
+  readonly cycleIndex: number;
+  readonly cyclesTotal: number;
+  readonly potUsdc: number;
+  readonly contributedThisCycle: number;
+  readonly bondMultiple: number;
+  readonly state: CircleState;
+  /** Whether these figures are real. False only for the seeded fixture. */
+  readonly isDemo: boolean;
+}
+
+/** `CircleState` from the blueprint. */
+export type CircleState = "forming" | "active" | "completed" | "cancelled";
+
 /** A point on the terminal's value curve. */
 export interface ValuePoint {
   readonly t: number;

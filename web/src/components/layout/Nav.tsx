@@ -218,6 +218,20 @@ export function Nav() {
             >
               Terminal
             </GateLink>
+            {/*
+              Groups stays in the menu from Phase 1 and leads to a route that
+              answers, per `FRONTEND_SPEC.md` S14A.4: "The nav item stays present
+              and clickable. It must never 404." A nav entry that leads nowhere is
+              worse than none, because it teaches a visitor the product's promises
+              are not kept.
+            */}
+            <GateLink
+              href="/app/groups"
+              onClick={() => setOpen(false)}
+              className="font-display text-3xl text-[var(--text-muted)]"
+            >
+              Groups
+            </GateLink>
           </div>
         </div>
       ) : null}

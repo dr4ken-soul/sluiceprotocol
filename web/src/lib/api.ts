@@ -10,6 +10,7 @@
 
 import { INDEXER_CONFIGURED, INDEXER_URL } from "./env";
 import type {
+  Circle,
   Holding,
   LiveIssuance,
   MarketplaceSnapshot,
@@ -159,4 +160,17 @@ export async function loadDraft(userId: string): Promise<unknown | null> {
     throw new IndexerError(`The draft store returned ${response.status}.`, "unreachable");
   }
   return response.json();
+}
+
+/**
+ * Reads the caller's circles.
+ *
+ * Groups is Phase 1 and the `circle` program is not deployed, so the indexer
+ * answers with an empty list and a reason. That is passed through rather than
+ * collapsed to `[]`, because an empty list and an unreadable list are different
+ * states and `FRONTEND_SPEC.md` S14A.4 requires the section to distinguish them.
+ */
+export async function fetchCircles(signal?: AbortSignal): Promise<Circle[]> {
+  const response = await read<{ circles: Circle[] }>("/api/circles", signal);
+  return response.circles;
 }
