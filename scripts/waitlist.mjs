@@ -35,14 +35,14 @@ function loadEnv() {
     if (!existsSync(path)) continue;
     const raw = readFileSync(path, "utf8");
     if (path.endsWith(".invite-secret")) {
-      process.env.BETA_INVITE_SECRET ??= raw.trim();
+      if (!process.env.BETA_INVITE_SECRET) process.env.BETA_INVITE_SECRET = raw.trim();
       continue;
     }
     for (const line of raw.split(/\r?\n/)) {
       const match = /^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/.exec(line);
       if (match === null) continue;
       const value = match[2].trim().replace(/^["']|["']$/g, "");
-      process.env[match[1]] ??= value;
+      if (!process.env[match[1]]) process.env[match[1]] = value;
     }
   }
 }
@@ -172,9 +172,17 @@ async function stats() {
 const { issueInvite } = await import("../web/src/lib/server/invites.ts");
 
 async function invite() {
+  // Imported here rather than at module load so `list` and `stats` do not pull in
+  // the signing code, and so a signing problem cannot stop somebody reading their list.
+  const { issueInvite } = await import("../web/src/lib/server/invites.ts");
   const dryRun = flag("dry-run");
   const limit = Number.parseInt(option("limit", "1"), 10);
-  const single = process.argv[2]?.startsWith("list") ? undefined : process.argv[2];
+  // argv[2] is the subcommand itself, so a positional address is argv[3]. Reading
+  // argv[2] here silently stored the literal string "invite" as the bound email,
+  // which produced a valid code that described itself as an open invite and was
+  // therefore forwardable. The signature verified, so nothing failed loudly.
+  const candidate = process.argv[3];
+  const single = candidate === undefined || candidate.startsWith("--") ? undefined : candidate;
 
   /** Prints a code block ready to paste into the email template. */
   const emit = (entry, invite) => {
