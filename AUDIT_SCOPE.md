@@ -261,5 +261,14 @@ wrote it, which is the only form of continuity a team of one can offer a reviewe
 **Fundraising status.** Pre-seed, not raised. No institutional capital, no SAFE, no
 lead investor. Self funded to date.
 
-**Contact.** Telegram and email on request, and both are listed on the Colosseum
-submission. Direct line preferred over a form for a scoping conversation.
+**Contact for the scoping call.**
+
+- **Telegram:** https://t.me/xoxo_psy
+- **Email:** web3psycho000@gmail.com
+
+Either reaches me directly. Telegram is faster, email is better for a document
+exchange. No form and no gate.
+
+Deliberately not published here: my phone numbers. A scoping conversation does not
+need them, and putting a personal mobile on a public repository is a cost with no
+benefit. If a call is wanted, Telegram does it.
