@@ -148,6 +148,29 @@ class SupabaseWaitlistStore implements WaitlistStore {
   ) {}
 
   async add(signup: WaitlistSignup): Promise<void> {
+    /*
+     * The keys below are the Postgres column names, not the TypeScript field names.
+     * PostgREST maps a JSON key straight to a column, so a body carrying
+     * `mobileMoney` is rejected with a 400 for referencing a column that does not
+     * exist. The type above is camelCase because that is what the rest of the
+     * frontend speaks, and the translation happens here rather than by renaming the
+     * columns, because a database with camelCase columns is a worse default.
+     *
+     * Absent optional columns are omitted rather than sent as null. PostgREST treats
+     * a missing key as "leave the default" and an explicit null as "overwrite the
+     * default", and the distinction matters for `created_at`.
+     */
+    const row: Record<string, string> = {
+      email: signup.email,
+      role: signup.role,
+      solana_familiarity: signup.solanaFamiliarity,
+    };
+    if (signup.intent !== undefined) row.intent = signup.intent;
+    if (signup.region !== undefined) row.region = signup.region;
+    if (signup.mobileMoney !== undefined) row.mobile_money = signup.mobileMoney;
+    if (signup.wallet !== undefined) row.wallet = signup.wallet;
+    if (signup.referrer !== undefined) row.referrer = signup.referrer;
+
     const response = await fetch(`${this.url}/rest/v1/waitlist_signups`, {
       method: "POST",
       headers: {
@@ -158,14 +181,15 @@ class SupabaseWaitlistStore implements WaitlistStore {
         // reason to echo a person's details back to them.
         prefer: "return=minimal",
       },
-      body: JSON.stringify(signup),
+      body: JSON.stringify(row),
     });
 
     // 23505 is the Postgres unique violation. PostgREST surfaces it as a conflict.
     if (response.status === 409) throw new AlreadyOnListError("already on the list");
     if (!response.ok) {
+      const detail = await response.text().catch(() => "");
       throw new Error(
-        `Waitlist store returned ${response.status}. Apply supabase/migrations/0003_waitlist.sql before using it.`,
+        `Waitlist store returned ${response.status}${detail === "" ? "" : `: ${detail.slice(0, 300)}`}. Check that supabase/migrations/0003_waitlist.sql is applied.`,
       );
     }
   }

@@ -73,3 +73,18 @@ create index if not exists waitlist_signups_created_at_idx
 -- writes. There is no anon read path and there should not be one: a waitlist is a
 -- list of who wants to be contacted, and it is not public information.
 alter table waitlist_signups enable row level security;
+
+-- RLS bypass is not the same as table permission. Bypassing row security stops
+-- policies being evaluated; it does not grant the privilege to touch the table at
+-- all. A fresh table has privileges only for its owner, so without this the route
+-- gets `permission denied for table waitlist_signups` even with a valid service
+-- role key. Verified against the live project: 403 with PostgREST's own hint. Same
+-- reason `0002_draft_query_grant.sql` exists for drafts.
+grant insert on table public.waitlist_signups to service_role;
+grant select on table public.waitlist_signups to service_role;
+
+-- Deliberately not granted: update and delete.
+--
+-- `delete` is omitted because removing somebody's details has to be something a
+-- human does deliberately, not something an inbound request can do on its own.
+-- Adding it back later should be a considered decision rather than a default.

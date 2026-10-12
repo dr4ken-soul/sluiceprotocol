@@ -189,6 +189,18 @@ export function WaitlistForm() {
                   value={option.value}
                   checked={selected}
                   onChange={() => setRole(option.value)}
+                  onClick={(event) => {
+                    // A native radio ignores a click on an option it has already
+                    // checked, so `onChange` never fires and the card cannot be
+                    // turned off. Preventing the default here and clearing the state
+                    // is what makes it a toggle rather than a one-way door. Verified:
+                    // without it, the only way to unselect was to pick a different
+                    // card, which is not a thing anyone should have to discover.
+                    if (selected) {
+                      event.preventDefault();
+                      setRole("");
+                    }
+                  }}
                   className="sr-only"
                 />
                 <span className="flex items-center gap-2">
@@ -318,6 +330,14 @@ export function WaitlistForm() {
                   value={option.value}
                   checked={selected}
                   onChange={() => setFamiliarity(option.value)}
+                  onClick={(event) => {
+                    // Same reason as the role cards: a checked native radio swallows
+                    // the click, so this is what lets a choice be taken back.
+                    if (selected) {
+                      event.preventDefault();
+                      setFamiliarity("");
+                    }
+                  }}
                   className="sr-only"
                 />
                 {option.label}
