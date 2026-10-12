@@ -13,6 +13,14 @@
  */
 
 import { WaitlistForm } from "@/components/waitlist/WaitlistForm";
+import { BetaReturnNote } from "@/components/waitlist/BetaReturnNote";
+
+/**
+ * Rendered per request, because the panel below the form depends on `?from=beta`.
+ * The reading happens in `BetaReturnNote`, which is the client boundary; this page
+ * itself still renders on the server.
+ */
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Join the waitlist. Sluice",
@@ -75,27 +83,16 @@ export default function WaitlistPage() {
         <WaitlistForm />
 
         {/*
-          The alternative to the form is stated, not implied.
+          The alternative to the form is stated, not implied, and it changes based on
+          why the visitor is here.
 
-          Someone with a devnet wallet and no patience for a list should be able to
-          just go and use the thing. Hiding that behind the form would be treating
-          everyone as if they could not make that choice for themselves.
+          Reaching this page with `?from=beta` means `ProtectedRoute` just turned them
+          away: they have a connected wallet and no invitation. Sending them to a
+          panel that invites them to open the terminal would be a loop, and would also
+          be insulting, because they have already tried. So that case says what
+          actually happened and what unblocks it, which is a code from us.
         */}
-        <div className="mt-14 rounded-[--radius-lg] border border-[var(--border-default)] bg-[var(--bg-surface)] p-6">
-          <h2 className="font-display text-sm font-semibold text-[var(--text-primary)]">
-            Already have a devnet wallet?
-          </h2>
-          <p className="mt-2 font-body text-xs leading-relaxed text-[var(--text-secondary)]">
-            You do not need to wait. Everything that has been built so far runs today
-            on devnet and the terminal will walk you through it.
-          </p>
-          <a
-            href="/app"
-            className="mt-4 inline-block font-mono text-xs text-[var(--accent-text)] underline underline-offset-4 hover:opacity-80"
-          >
-            Open the terminal
-          </a>
-        </div>
+        <BetaReturnNote />
       </div>
     </main>
   );

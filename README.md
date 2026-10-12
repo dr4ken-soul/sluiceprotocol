@@ -143,7 +143,13 @@ migrations in order, in the Supabase SQL editor or via `supabase db push`:
 supabase/migrations/0001_drafts.sql
 supabase/migrations/0002_draft_query_grant.sql
 supabase/migrations/0003_waitlist.sql
+supabase/migrations/0004_beta_invites.sql
 ```
+
+0004 also creates `consume_invite` and `activate_invite`. They are functions rather
+than plain queries because PostgREST cannot express an atomic increment, and a
+single-use invite that can be redeemed twice by two people at once is not a
+single-use invite.
 
 Both tables have row level security enabled with **no policies**, which is
 intentional. There is no anonymous read path to a waitlist: it is a list of who
@@ -233,6 +239,101 @@ up, and this project does not publish numbers it made up. A wallet address is
 optional and explicitly so: requiring one to join a list would exclude exactly the
 people the Groups design is for, who do not have one and are not going to make one
 to fill in a form.
+
+## Access, and what an invite actually proves
+
+The app routes are invite-gated. `ProtectedRoute` asks `/api/beta/status` whether
+the connected wallet has redeemed a code, and sends anybody who has not to the
+waitlist. Connecting a wallet stopped being sufficient, because the site says it is
+not open and a wallet is not the same thing as a place.
+
+**An invite on devnet proves exactly one thing: a human the project trusts handed
+this code to this person.** It does not prove *who* that person is, and any design
+that implied otherwise would be claiming a guarantee it does not have.
+
+That is a deliberate boundary, not a shortcut. The invite is not the security
+boundary; **the wallet address** is. Email selects the cohort and anyone can create
+an email. An address cannot be created by hand without a key, so binding to it is
+what turns "somebody holding a code" into "this specific signer". The flow is:
+
+```
+/invite/CODE -> verify on the server -> connect wallet -> POST /api/beta/redeem
+             -> use consumed atomically, wallet written, activated_at set
+             -> the gate opens for that address, from then on
+```
+
+There are two kinds of code, and the difference is what stops the wrong person in:
+
+| | Email-bound | Open |
+|---|---|---|
+| Signature covers | `code`, `email`, `expiresAt`, `maxUses` | `code`, `expiresAt`, `maxUses` |
+| Forwarded to somebody else | fails, `email` is in the payload | works, up to `maxUses` |
+| Use when | you know their email | met in person, no address for them |
+| Default `maxUses` | 1 | 1, hard-capped at 3 |
+
+An open code exists because the email-bound kind is useless when you meet somebody
+at an event and have no address for them. Its weakness, forwardability, is bounded
+by `maxUses` and a fourteen-day expiry rather than pretended away. Rotating
+`BETA_INVITE_SECRET` invalidates every outstanding code, which is the intended way
+to withdraw a batch you have lost.
+
+Codes are Crockford base32 with `I`, `L`, `O` and `U` removed, so nothing in them
+can be misread over the phone or off a screenshot. Issuing one:
+
+```bash
+node scripts/issue-invite.mjs --email someone@example.com   # bound, single use
+node scripts/issue-invite.mjs --open --uses 2               # no email, two wallets
+```
+
+### The mainnet path
+
+Three things change, and none of them is "trust the email harder".
+
+**1. Move the allowlist on-chain.** Add an `Allowlist` PDA holding the authorised
+addresses, owned by the same pause guardian that can already halt issuance.
+`ProtectedRoute` stops being the boundary and becomes a convenience: the terminal
+reads it to avoid a pointless transaction, and the program checks regardless. That
+difference is the whole point, because a frontend gate can be bypassed by anyone who
+reads the JavaScript and a program gate cannot be bypassed by anyone at all.
+
+**2. Replace the code with a signature challenge.** The invitation becomes a
+`SignInvite` instruction: the invited wallet signs a nonce the program issues, and
+the program verifies it against the allowlist before it writes. What that buys is
+that identity is established by a key rather than asserted by a database row that
+somebody with a service role key could have written. This is the step that turns
+"a human approved this" into "this key was approved", and it is blocked on the
+dependency graph resolving, not on design.
+
+**3. Drop email as a credential entirely.** At mainnet, email is a contact address
+and never an authorisation. The column stays because it is how somebody is told they
+were promoted. Nothing that grants access reads it.
+
+Two controls come with it, worth stating now rather than at launch:
+
+- **One activation per address,** enforced by a unique index on `wallet`, so a code
+  cannot be walked across a list of wallets harvested from somewhere else.
+- **An on-chain kill that does not depend on the frontend.** The pause guardian can
+  already halt issuance, tranche release and redemption claims. It cannot halt a
+  holder claiming funds already vested to them, and it must keep that property. A
+  guardian that can freeze a withdrawal is a custodian, and this protocol is not one.
+
+What does **not** change: the fee schedule, the default-no resolution path, and the
+rule that no Sluice fee comes from the LP fee. An access model is not a reason to
+reopen a pricing decision that was settled on the record.
+
+### What is deliberately not built
+
+No referral rewards. Every piece of research on invite-driven launches converges on
+the same conclusion: flat per-referral rewards attract sybil farms, and the moment a
+reward is attached to an invite the queue stops measuring interest and starts
+measuring bot throughput. Sluice has no token, so there is nothing to pay with and
+nothing to buy. If invites should spread, the use cap and the expiry are the
+mechanism, and they are already there.
+
+One obligation that comes with all of this: **the waitlist has to be a real
+waitlist.** People have to be promoted from it on a cadence, not once. A list nobody
+is ever let in from is a wall that claims not to be one, and it costs more trust
+than having no list at all.
 
 ## Fees
 
