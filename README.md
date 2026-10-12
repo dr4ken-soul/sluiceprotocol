@@ -335,6 +335,26 @@ waitlist.** People have to be promoted from it on a cadence, not once. A list no
 is ever let in from is a wall that claims not to be one, and it costs more trust
 than having no list at all.
 
+## Audit scope
+
+**[`AUDIT_SCOPE.md`](./AUDIT_SCOPE.md) is the scoping document**, written for CertiK
+and usable by any reviewer. It carries the measured line counts, the value-at-risk
+ranking, the dependency exposure table, a 12 month roadmap and a mainnet target.
+
+The short version, because the ordering matters more than the detail:
+
+**In scope:** the eight Issuance programs, at a commit hash tagged for audit.
+**Out of scope:** Groups programs, the indexer, the frontend, and third-party
+dependencies including Meteora and Panta.
+**On the roadmap:** Groups, roughly 750 lines, audited separately before it holds
+funds.
+
+Settlement, redemption and waterfall are 1,419 lines and hold 100% of user funds at
+rest. That is the smallest and highest-risk slice, and a scoping conversation that
+does not start there has started in the wrong place.
+
+Roadmap and audit scope are different documents. Conflating them is how a project
+ends up described as audited when a subset was.
 ## Fees
 
 Fixed, published, unchanging. Not tiered by volume, not stepped by growth, not
