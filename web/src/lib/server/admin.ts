@@ -66,15 +66,44 @@ function safeEqual(a: string, b: string): boolean {
   return timingSafeEqual(left, right);
 }
 
-/** Checks a submitted passphrase. */
-export function passphraseIsValid(candidate: string): boolean {
-  try {
-    return safeEqual(signature(), createHmac("sha256", passphrase()).update(candidate).digest("base64url"));
-  } catch {
-    return false;
-  }
-}
+/**
+ * Checks a submitted pass phrase, and says which of two failures it was.
+ *
+ * A single boolean could not, and that cost an hour of debugging a gate that was
+ * working exactly as written against a value that had not arrived.
+ *
+ * "unconfigured" is a server fault and is reported as 503, not 401. Collapsing the
+ * two into one 401 tells an operator with the right phrase that they typed it
+ * wrong, which sends them looking at their keyboard instead of at the environment.
+ * It leaks nothing to an attacker: both cases still refuse the request, and neither
+ * reveals anything about the value itself.
+ */
+export type PassphraseCheck =
+  | { readonly ok: true }
+  | { readonly ok: false; readonly reason: "unconfigured" }
+  | { readonly ok: false; readonly reason: "wrong" };
 
+export function checkPassphrase(candidate: string): PassphraseCheck {
+  let stored: string;
+  try {
+    stored = passphrase();
+  } catch {
+    return { ok: false, reason: "unconfigured" };
+  }
+  /*
+   * A constant time comparison of the submitted value against the stored one.
+   *
+   * This previously compared HMAC(secret, candidate) against HMAC(secret,
+   * "sluice-admin-v1"), which is the value the session cookie carries. Those are two
+   * different messages under the same key, so they never matched, and the gate was
+   * impossible to open no matter what was typed. It looked like a configuration
+   * problem and was read as one for a long time.
+   *
+   * The cookie signature stays, because a cookie is handed to the browser and has to
+   * be unforgeable. This comparison does not, because nothing leaves the server.
+   */
+  return safeEqual(candidate, stored) ? { ok: true } : { ok: false, reason: "wrong" };
+}
 /** The cookie to set after a successful sign in. */
 export function adminCookie(): string {
   return `${ADMIN_COOKIE}=${signature()}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${MAX_AGE_SECONDS}`;

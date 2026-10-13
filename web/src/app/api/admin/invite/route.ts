@@ -8,7 +8,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { clearAdminCookie, isAdmin, passphraseIsValid, adminCookie } from "@/lib/server/admin";
+import { clearAdminCookie, isAdmin, checkPassphrase, adminCookie } from "@/lib/server/admin";
 import { issueInvite } from "@/lib/server/invites";
 import { canSend, sendInvite } from "@/lib/server/mailer";
 
@@ -30,11 +30,20 @@ export async function POST(request: Request): Promise<NextResponse> {
   };
 
   if (action === "login") {
-    if (typeof passphrase !== "string" || !passphraseIsValid(passphrase)) {
-      /*
-       * 401 with the same message for a wrong pass phrase and an unset one. The
-       * distinction is useful to an attacker and to nobody else.
-       */
+    if (typeof passphrase !== "string") {
+      return NextResponse.json({ error: "That is not it." }, { status: 401 });
+    }
+    const check = checkPassphrase(passphrase);
+    if (check.ok === false) {
+      // A misconfigured server is not a failed login, and saying so is the only way an
+      // operator finds out that the gate is unreachable for a reason that has nothing
+      // to do with what they typed.
+      if (check.reason === "unconfigured") {
+        return NextResponse.json(
+          { error: "ADMIN_PASSPHRASE is not set or is shorter than 16 characters on the server." },
+          { status: 503 },
+        );
+      }
       return NextResponse.json({ error: "That is not it." }, { status: 401 });
     }
     return NextResponse.json({ ok: true }, { headers: { "set-cookie": adminCookie() } });
