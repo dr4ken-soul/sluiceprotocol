@@ -63,7 +63,7 @@ export function DisconnectToast() {
           <p className="font-body text-xs text-[var(--text-secondary)]">
             {neverConnected
               ? "Connect a wallet to open the terminal."
-              : "Wallet disconnected. Your positions stay on chain."}
+              : "Wallet disconnected, your positions stay on chain"}
           </p>
         </motion.div>
       ) : null}

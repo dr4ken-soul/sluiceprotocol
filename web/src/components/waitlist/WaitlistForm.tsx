@@ -362,7 +362,7 @@ export function WaitlistForm() {
           name="wallet"
           value={wallet}
           onChange={(event) => setWallet(event.target.value)}
-          placeholder="Optional. We will help you make one during the beta."
+          placeholder="Optional, and we will help you make one during the beta."
           aria-invalid={errors.wallet !== undefined}
           className={FIELD}
         />

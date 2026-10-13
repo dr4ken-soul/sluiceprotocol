@@ -40,7 +40,7 @@ export class IndexerError extends Error {
 async function read<T>(path: string, signal?: AbortSignal): Promise<T> {
   if (!INDEXER_CONFIGURED) {
     throw new IndexerError(
-      "No indexer is configured. Set NEXT_PUBLIC_INDEXER_URL to the service that owns the live reads.",
+      "No indexer is configured: set NEXT_PUBLIC_INDEXER_URL to the service that owns the live reads.",
       "unconfigured",
     );
   }

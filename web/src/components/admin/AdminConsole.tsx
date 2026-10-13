@@ -162,7 +162,7 @@ export function AdminConsole({
         </p>
         <p className="mt-2 font-body text-xs leading-relaxed text-[var(--text-secondary)]">
           {mailReady
-            ? "Inviting mints a code and sends the email in one step. Codes are single use and last fourteen days."
+            ? "Inviting mints a code and sends the email in one step; codes are single use and last fourteen days."
             : `${mailDetail} Codes will not be minted while this is unresolved, because a code that cannot be emailed is a code that gets spent on nobody.`}
         </p>
       </div>

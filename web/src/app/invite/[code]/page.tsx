@@ -39,7 +39,7 @@ const REJECTION_COPY: Record<string, { title: string; body: string }> = {
   },
   revoked: {
     title: "That code has been withdrawn.",
-    body: "It was issued and then cancelled. Ask for a fresh one and it will work.",
+    body: "It was issued and then cancelled; ask for a fresh one and it will work.",
   },
   expired: {
     title: "That code has expired.",

@@ -34,7 +34,7 @@ const STEPS: readonly LadderStep[] = [
   {
     marker: "1",
     title: "Join a circle",
-    copy: "Contribute the same amount as everyone else, every cycle. Your bond is locked. It starts at three times a contribution.",
+    copy: "Contribute the same amount as everyone else, every cycle, and your locked bond starts at three times a contribution.",
   },
   {
     marker: "2",
@@ -49,7 +49,7 @@ const STEPS: readonly LadderStep[] = [
   {
     marker: "4",
     title: "Raise as a business",
-    copy: "The same record is what an issuer carries into a raise. Milestones you clear add to it. Milestones you fail are on it too.",
+    copy: "The same record is what an issuer carries into a raise: milestones you clear add to it, and milestones you fail are on it too.",
   },
 ] as const;
 

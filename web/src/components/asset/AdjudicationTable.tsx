@@ -59,7 +59,7 @@ export function AdjudicationTable({ milestones }: { milestones: readonly Milesto
         <EmptyState
           message={
             filter === "live"
-              ? "No milestone is open right now. A new question opens when the issuer configures the next tranche."
+              ? "No milestone is open right now; a new question opens when the issuer configures the next tranche."
               : "Nothing has resolved yet. The first resolution routes capital either to release or to redemption."
           }
         />

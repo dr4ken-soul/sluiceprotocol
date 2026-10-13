@@ -42,7 +42,7 @@ export function PremiumToNavChart({
         role="img"
         aria-label={`Token price against NAV over the ${range} range. Currently ${
           aboveNav ? "above" : "below"
-        } NAV by ${Math.abs(premium).toFixed(1)} percent. No historical price series has been recorded for this issuance yet.`}
+        } NAV by ${Math.abs(premium).toFixed(1)} percent, and no historical price series has been recorded for this issuance yet.`}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         className="h-[200px] w-full md:h-[240px]"
         fill="none"

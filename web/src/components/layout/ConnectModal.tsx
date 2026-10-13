@@ -204,8 +204,8 @@ function ConnectModal({ open, onClose }: { open: boolean; onClose: () => void })
         setPhase("error");
         setError(
           lower.includes("reject") || lower.includes("denied") || lower.includes("declined")
-            ? "The request was declined in your wallet. Nothing was changed and you can try again."
-            : `${message} Nothing was changed. You can try again.`,
+            ? "The request was declined in your wallet, nothing was changed, and you can try again."
+            : `${message} Nothing was changed, so you can try again.`,
         );
       }
     },
@@ -246,8 +246,8 @@ function ConnectModal({ open, onClose }: { open: boolean; onClose: () => void })
         setPhase("error");
         setError(
           cause instanceof Error
-            ? `${cause.message} Nothing was changed. You can try again.`
-            : "Sign-in did not complete. Nothing was changed. You can try again.",
+            ? `${cause.message} Nothing was changed, so you can try again.`
+            : "Sign-in did not complete, nothing was changed, and you can try again.",
         );
       }
     },
@@ -260,7 +260,7 @@ function ConnectModal({ open, onClose }: { open: boolean; onClose: () => void })
       // The adapter finished without the modal observing a resolution, which means
       // it failed. Surfaced as an error rather than leaving the button spinning.
       setPhase("error");
-      setError("The wallet did not complete the connection. You can try again.");
+      setError("The wallet did not complete the connection, but you can try again.");
     }
   }, [connecting, phase]);
 

@@ -46,12 +46,12 @@ const ROWS: readonly Row[] = [
   {
     path: "M12 3 4 6v5c0 4.5 3.4 8.6 8 9.8 4.6-1.2 8-5.3 8-9.8V6l-8-3Z",
     title: "A bond instead of shame",
-    copy: "Everyone locks a deposit. Miss a contribution and part of it is slashed to cover the group. The circle continues instead of collapsing.",
+    copy: "Everyone locks a deposit: miss a contribution and part of it is slashed to cover the group, so the circle continues instead of collapsing.",
   },
   {
     path: "M4 18h16M4 18V9m5 9V9m6 9V9m5 9V9M3 6h18",
     title: "The bond falls as you build history",
-    copy: "Three times a contribution with no history. Half a contribution after five completed circles. That is a credit file, earned rather than issued.",
+    copy: "Three times a contribution with no history, halving to half a contribution after five completed circles: a credit file, earned rather than issued.",
   },
   {
     path: "M12 3 7 6v6c0 3.3 2.1 6.3 5 7 2.9-.7 5-3.7 5-7V6l-5-3ZM9.5 12l1.8 1.8 3.4-3.6",

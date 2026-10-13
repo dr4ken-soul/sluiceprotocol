@@ -30,8 +30,8 @@ const FRESHNESS_LABEL: Record<AttestationFreshness, string> = {
 
 const FRESHNESS_DETAIL: Record<AttestationFreshness, string> = {
   fresh: "Attested within thirty days.",
-  stale: "Over thirty days since attestation. A refresh is due.",
-  lapsed: "Over sixty days since attestation. Investing is disabled until it is refreshed.",
+  stale: "Over thirty days since attestation, so a refresh is due.",
+  lapsed: "Over sixty days since attestation, and investing is disabled until it is refreshed.",
 };
 
 export function AttestationPanel({ issuance }: { issuance: LiveIssuance }) {

@@ -30,7 +30,7 @@ const STAGES: Stage[] = [
     number: "02",
     title: "Comply",
     body:
-      "A Token-2022 transfer hook enforces the jurisdiction's policy: who may hold, what may be transferred, for how long. The issuer posts a bond. On graduation the hook is revoked automatically and the market opens.",
+      "A Token-2022 transfer hook enforces the jurisdiction's policy, covering who may hold, what may be transferred and for how long, and the issuer posts a bond. On graduation the hook is revoked automatically and the market opens.",
   },
   {
     number: "03",
@@ -42,7 +42,7 @@ const STAGES: Stage[] = [
     number: "04",
     title: "Adjudicate",
     body:
-      "A binary market opens on a single machine-checkable question about the milestone. Anyone may trade it. The price is the protocol's only source of truth about whether the milestone happened.",
+      "A binary market opens on a single machine-checkable question about the milestone, and anyone may trade it. The price is the protocol's only source of truth about whether the milestone happened.",
   },
   {
     number: "05",

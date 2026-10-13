@@ -55,7 +55,7 @@ export function RedeemPanel({ code, email, remainingUses }: RedeemPanelProps) {
       // Straight into the app, because the whole reason to redeem is to get there.
       router.push("/app");
     } catch {
-      setError("We could not reach the server. Check your connection and try again.");
+      setError("We could not reach the server, so check your connection and try again.");
       setPhase("idle");
     }
   }

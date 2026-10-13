@@ -123,12 +123,12 @@ const DEPENDENCIES = [
   {
     name: "Meteora DBC",
     blast:
-      "Holds capital in the curve pool during a raise. If compromised, funds in that pool are at risk. Tranches already released and anything in a Sluice vault are not.",
+      "Holds capital in the curve pool during a raise. If compromised, funds in that pool are at risk; tranches already released, and anything in a Sluice vault, are not.",
   },
   {
     name: "Meteora DAMM v2",
     blast:
-      "Holds post-graduation liquidity. If compromised, secondary liquidity and trading are affected. Tokens in holder wallets and balances in Sluice vaults are not.",
+      "Holds post-graduation liquidity. If compromised, secondary liquidity and trading are affected; tokens in holder wallets, and balances in Sluice vaults, are not.",
   },
   {
     name: "Panta",
@@ -148,6 +148,6 @@ const DEPENDENCIES = [
   {
     name: "Solana",
     blast:
-      "Liveness of the whole system. An outage stops transacting until it recovers. No state is lost.",
+      "Liveness of the whole system. An outage stops transacting until it recovers, and no state is lost.",
   },
 ] as const;

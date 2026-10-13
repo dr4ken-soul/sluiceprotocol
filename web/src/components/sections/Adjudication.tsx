@@ -41,7 +41,7 @@ const TABS: Tab[] = [
     label: "The market",
     title: "Anyone may trade it, so the price means something",
     body:
-      "A binary market opens on the question. YES and NO are priced in cents. There is no committee and no vote. The people closest to the asset carry the most information, and the price is where that information ends up.",
+      "A binary market opens on the question, with YES and NO priced in cents. There is no committee and no vote: the people closest to the asset carry the most information, and the price is where that information ends up.",
     Visual: MarketVisual,
   },
   {
@@ -57,7 +57,7 @@ const TABS: Tab[] = [
     label: "The settlement",
     title: "Capital moves the moment it resolves",
     body:
-      "On yes, the tranche releases to the issuer on its vesting schedule. On no, remaining capital goes to the redemption vault and holders claim pro rata against what they hold. No negotiation, no recovery process, no one to chase.",
+      "On yes the tranche releases to the issuer on its vesting schedule; on no, remaining capital goes to the redemption vault and holders claim pro rata against what they hold. No negotiation, no recovery process, no one to chase.",
     Visual: SettlementVisual,
   },
 ];

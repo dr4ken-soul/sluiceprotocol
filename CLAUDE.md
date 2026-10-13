@@ -2,17 +2,27 @@
 
 ## What This Is
 
-Sluice is a protocol for issuing claims on real-world cash flow, invoices, royalties and revenue, as tokens on Solana. An issuer values their asset, configures a compliance policy, raises along a Meteora DBC bonding curve, then hits a milestone. A binary market on that milestone decides what happens next. Resolve yes and the next tranche releases. Resolve no and remaining capital routes to a redemption vault where holders claim pro rata.
+**Sluice is one protocol with two products, both built on a single idea taken from the esusu: pooled capital needs an enforcement mechanism that survives contact with strangers.**
 
-Sluice is named for the gate that controls the release of water: capital sits behind it until the market confirms the work, then it opens. The structure underneath is the West African rotating savings association, the esusu, where enforcement is social because everyone knows everyone. Sluice keeps that structure and replaces the enforcement with a priced, tradeable, machine-resolvable market.
+**Groups** is the esusu itself, rebuilt so it works between people who have never met. A fixed circle of members each contributes the same amount every cycle; one member takes the full pot per cycle, in rotation. A graduated bond replaces shame.
+
+**Issuance** takes the same enforcement idea and applies it to a business raising capital against future income. An issuer values their asset, configures a compliance policy, raises along a Meteora DBC bonding curve, then hits a milestone. A binary market on that milestone decides what happens next. Resolve yes and the next tranche releases. Resolve no and remaining capital routes to a redemption vault where holders claim pro rata.
+
+**The two products are linked by one primitive.** Every cycle a member completes is recorded on-chain. Every milestone an issuer clears is recorded on-chain. Both accumulate into the same portable track record. A market trader who completes four Groups cycles builds the evidence that lets them raise an Issuance later. That ladder, from informal savings to formal capital, is the reason both products belong in one protocol.
+
+Sluice is named for the gate that controls the release of water: capital sits behind it until the condition is met, then it opens.
 
 Built for Colosseum Crypto World's Fair, September 14 to October 12 2026.
+
+**Phase 0 builds Issuance only.** Groups is specified now and built in Phase 1.
 
 ---
 
 ## One-Line Pitch
 
-Issue the real asset. The market decides if you keep the money.
+Sluice: the esusu, rebuilt so it works between strangers, and the same enforcement applied to businesses raising capital.
+
+Short form, for forms and profiles: A protocol for savings circles and cash-flow issuance on Solana, where capital releases only when the condition is met.
 
 ---
 
@@ -43,7 +53,9 @@ This file is the map, not the territory. Where it says "as specified in X", go a
 
 ---
 
-## MVP Features (all six are Phase 0)
+## MVP Features
+
+**Issuance, Phase 0. Six features, all shipping.**
 
 1. **Valuation-anchored curve.** A NAV band sets the shape of a 16 segment DBC curve. Issuer sees it before committing
 2. **Compliance transfer hook.** Token-2022 hook enforcing a jurisdiction policy. **DBC revokes it automatically at graduation**, controlled primary, permissionless secondary
@@ -52,9 +64,15 @@ This file is the map, not the territory. Where it says "as specified in X", go a
 5. **Waterfall vault.** Real-world cash flow distributing pro rata to holders
 6. **Public risk terminal.** Every figure a live chain read, plus an embeddable widget and API
 
-Autopilot is the only program deferred past Phase 0, unconditionally.
+**Groups, Phase 1. Not in Phase 0.**
 
-**Minimum raise is $25,000,** enforced at issuance creation.
+1. **Circle creation.** N members, contribution in USDC, cycle length, payout order fixed when the circle fills
+2. **Graduated bond.** Falls from 3x the contribution to near zero as track record accumulates
+3. **Cycle engine.** Contribute, then the pot disburses on full contribution or at the deadline, whichever is first
+4. **Default handling.** Bond slashed to cover the shortfall, group guarantee absorbs any remainder
+5. **Track record.** Cycles and groups completed, defaults recorded. Portable, and shared with Issuance
+
+**Minimum raise for an Issuance is $25,000,** enforced at creation.
 
 ---
 
@@ -80,6 +98,8 @@ Autopilot is the only program deferred past Phase 0, unconditionally.
 ```
 sluice/
 ├── programs/
+│   ├── circle/                  Groups. Membership, payout order, cycle state
+│   ├── group_bond/              Groups. Graduated bond, slashing, release
 │   ├── settlement/          fee claimer, vesting, bond vault, tranche release
 │   ├── redemption/          pro rata claims on failed milestones
 │   ├── waterfall/           cash flow distribution
@@ -96,14 +116,17 @@ sluice/
 ├── web/
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── page.tsx                    landing, eight sections
+│   │   │   ├── page.tsx                    landing, ten sections
 │   │   │   ├── app/page.tsx                terminal
 │   │   │   ├── app/asset/[ticker]/page.tsx asset detail, five tabs
 │   │   │   ├── app/issue/page.tsx          six step wizard
+│   │   │   ├── app/groups/page.tsx         circle list, Phase 1
+│   │   │   ├── app/groups/new/page.tsx     create a circle, Phase 1
+│   │   │   └── app/circle/[address]/page.tsx  circle detail, Phase 1
 │   │   │   └── layout.tsx                  Privy provider, grain overlay
 │   │   ├── components/
 │   │   │   ├── layout/                     Nav, ProtectedRoute, WalletMenu
-│   │   │   ├── sections/                   the eight landing sections
+│   │   │   ├── sections/                   the ten landing sections
 │   │   │   ├── terminal/                   holdings, value curve, range selector
 │   │   │   └── asset/                      adjudication table, attestation panel
 │   │   ├── hooks/
@@ -182,7 +205,22 @@ viewport:   { once: false, amount: 0.1 }
 
 **Hero:** asymmetric editorial, headline left on columns 1 to 6 offset downward, live issuance card on columns 7 to 12 pulled upward so they never share a baseline. Video at z-0, scrim z-2, grain z-3, headline z-10, card z-20.
 
-**Landing sections, in order:** Hero, Problem, Mechanism, Live marketplace, Adjudication, Compliance, Metrics, Final CTA, Footer. Eight distinct layout families, two eyebrows total on sections 3 and 6.
+**Landing sections, in order:** Hero, Problem, Groups, Mechanism, The Ladder, Live marketplace, Adjudication, Compliance, Metrics, Final CTA, Footer. Ten sections, each with a distinct layout family. Two eyebrows total, on Groups and Compliance.
+
+| # | Section | Job | Product |
+|---|---|---|---|
+| 1 | Hero | The circle and the milestone, in one frame | Both |
+| 2 | Problem | The esusu, and why shame does not travel | Both |
+| 3 | Groups | The circle, rebuilt with a bond | Groups |
+| 4 | Mechanism | The gate, and what opens it | Issuance |
+| 5 | The Ladder | How a completed circle becomes a credible raise | Both |
+| 6 | Live marketplace | Live issuances, every figure a chain read | Issuance |
+| 7 | Adjudication | One question, one market, one resolution | Issuance |
+| 8 | Compliance | Jurisdiction as configuration | Issuance |
+| 9 | Metrics | Protocol figures, all live | Both |
+| 10 | Final CTA | One action per product | Both |
+
+**Section 5 is the most important section on the page.** It is the only place the two products are shown as one thing, and it is the argument for Sluice existing as a single protocol rather than two separate apps. Do not cut it for length.
 
 **App interior:** static only, grain, hairlines, colour blocking. No video on any `/app` route.
 
@@ -275,3 +313,22 @@ Never substitute a hardcoded placeholder, a generated icon or an emoji.
 - Panta sidetrack
 - Superteam Nigeria, working prototype plus three pitch reviews plus demo day
 - X posts, see MARKETING.md
+
+---
+
+## Copy and punctuation
+
+`FRONTEND_SPEC.md` §16 is the authority. The short version:
+
+**A full stop ends a thought, a comma carries one on, and there is no mechanical
+rule.** Decide per sentence. "Nothing was changed. You can try again." is two
+announcements where there was one fact and one instruction; "Nothing was changed,
+you can try again." is a comma splice. Both are wrong, for opposite reasons.
+
+No em dash in interface copy. No trailing punctuation on a label, a button, an
+eyebrow or a badge. A helper sentence takes one full stop. Fragments are allowed when
+the thought is complete without one.
+
+Applies to every route and every state, including loading, empty, error and toast
+copy. Audit a new component's strings with the component rather than in a later
+sweep.

@@ -58,13 +58,13 @@ export function StepAsset({ draft, update }: StepProps) {
         validate={(value) => {
           const trimmed = value.trim();
           if (trimmed.length === 0) {
-            return "Enter a ticker. Without one the issuance cannot be linked to from the terminal.";
+            return "Enter a ticker, without one the issuance cannot be linked to from the terminal.";
           }
           if (trimmed.length > 8) {
             return `Shorten it to eight characters or fewer. The on-chain field holds eight bytes, and a longer value would be truncated on chain rather than rejected.`;
           }
           if (!/^[A-Za-z0-9 .-]+$/.test(trimmed)) {
-            return "Use letters, digits, spaces, dots or hyphens only. Anything else will not render consistently in the monospace tables.";
+            return "Use letters, digits, spaces, dots or hyphens only; anything else will not render consistently in the monospace tables.";
           }
           return undefined;
         }}
@@ -178,7 +178,7 @@ export function StepValuation({ draft, update }: StepProps) {
             return "Enter a positive number of micro-units.";
           }
           if ((draft.navLow ?? 0) >= parsed) {
-            return `The upper bound must exceed the lower bound of ${draft.navLow}. An inverted band is rejected on chain.`;
+            return `The upper bound must exceed the lower bound of ${draft.navLow}, as an inverted band is rejected on chain.`;
           }
           return undefined;
         }}
@@ -444,7 +444,7 @@ export function StepMilestones({ draft, update }: StepProps) {
                 return "Every tranche needs a question. A tranche without one cannot be adjudicated, so its capital would never release.";
               }
               if (trimmed.length < 20) {
-                return "Make the question specific enough to be checkable. Name a number, a date and a source.";
+                return "Make the question specific enough to be checkable: name a number, a date and a source.";
               }
               const hasNumber = /\d/.test(trimmed);
               const hasDate = /quarter|month|year|day|week/i.test(trimmed);
@@ -668,7 +668,7 @@ const PRESETS = [
     id: "standard",
     name: "Standard raise",
     description:
-      "Sixteen evenly weighted segments with a linear market cap fee scheduler. The default for an invoice-backed raise.",
+      "Sixteen evenly weighted segments with a linear market cap fee scheduler, and the default for an invoice-backed raise.",
   },
   {
     id: "royalty",

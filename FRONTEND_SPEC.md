@@ -475,9 +475,13 @@ One screen, two decisions, in this order.
 
 ```
 STEP 1, ROLE
-  "I'm raising"          -> issuer
-  "I'm investing"        -> investor
-  Both selectable later. Neither is a permission boundary.
+  "I'm saving with a group"   -> member      (Groups)
+  "I'm raising capital"       -> issuer      (Issuance)
+  "I'm investing"             -> investor    (Issuance)
+
+  All three selectable later. None is a permission boundary.
+  Order matters: the most common and least crypto-native first.
+  Circle members are the largest audience by headcount.
 
 STEP 2, METHOD  (identical list for both roles)
   Continue with Google
@@ -504,8 +508,8 @@ do first is a normal question.
 **This is the most important decision in this section.** Role must never be
 treated as a permission check.
 
-- The same wallet address can be an issuer and an investor, and most issuers
-  will hold positions in their own issuance
+- The same wallet address can be a member, an issuer and an investor at once,
+  and most issuers will hold positions in their own issuance
 - Compliance eligibility is decided on-chain by the transfer hook and the policy
   account, never by a role flag in the interface
 - "Issuer" means "show me the issuance surfaces", not "allow me to issue"
@@ -527,29 +531,38 @@ maintaining the asset page twice and guarantees the two copies drift.
 
 The differences are a short list of issuer-only surfaces:
 
-| Surface | Investor | Issuer |
-|---|---|---|
-| Portfolio value, holdings, activity | yes | yes |
-| Marketplace, asset detail, adjudication | yes | yes |
-| My issuances | no | yes |
-| Create issuance wizard | no | yes |
-| Attestation panel, bond status | no | yes |
-| Push a distribution | no | yes |
+| Surface | Member | Investor | Issuer |
+|---|---|---|---|
+| Portfolio value, activity, wallet menu | yes | yes | yes |
+| Marketplace, asset detail, adjudication | yes | yes | yes |
+| My circles, create or join a circle | yes | no | no |
+| Cycle status, contribution reminders, bond status | yes | no | no |
+| Holdings and distributions | no | yes | yes |
+| My issuances | no | no | yes |
+| Create issuance wizard | no | no | yes |
+| Attestation panel, push a distribution | no | no | yes |
 
 **Implementation:**
 
 ```
-/app shell, identical for both roles
-  Nav:  Terminal | Marketplace | Adjudication
+/app shell, identical for all three roles
+  Nav:  Terminal | Marketplace | Groups | Adjudication
         + Issue        rendered only when the address owns an Issuance,
                        or when the user has pinned the issuer view
+        Groups is always present from Phase 1. Before then it shows a
+        short "coming next" state, never a dead link and never a mockup
   Default landing tab is set by role choice, overridable at any time
-  "Switch to issuer view" lives in the wallet menu, not buried in settings
+  "Switch to issuer view" and the equivalents live in the wallet menu,
+  not buried in settings
 ```
 
 A user who has never issued sees no issuer surfaces and no empty issuer tabs.
 A user who has issued sees them automatically, whether or not they chose
 "issuer" at sign-up.
+
+**Groups is the default landing view for any address with no issuance and no
+holdings.** A new user arriving to save should not land on an empty trading
+terminal.
 
 ### Config
 
@@ -603,6 +616,9 @@ self-custody wallet. This is a nudge, never a block.
   provisioned and a purchase completes without any extension installed
 - Sign up as investor with a self-custody wallet, confirm the same flows work
 - Sign up as issuer with email, confirm the wizard is reachable
+- Sign up as a member, confirm the Groups surfaces appear and Issuance
+  surfaces do not
+- Confirm switching between all three views preserves the shell with no reload
 - Sign up as investor, then create an issuance, confirm the Issue nav item and
   issuer surfaces appear without a role change
 - Switch views from the wallet menu, confirm the shell persists and no reload
@@ -801,7 +817,93 @@ sections, per the recipe.
 
 ---
 
-## 5. Section 3: Mechanism
+## 4A. Section 3: Groups
+
+**Recipe:** `split-feature-detail` (COMPOSITION_RECIPES.md, Section D)
+**Layout family:** app-preview
+**Job:** Educate
+**Eyebrow:** "The circle". One of only two eyebrows on the page
+
+```python
+data-section-name="Groups"
+
+SECTION
+  py-24 md:py-32 px-6 md:px-10
+  background: bg-[var(--bg-primary)]
+
+CONTAINER
+  mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center
+
+LEFT (text)
+  Heading:
+    font-display text-3xl md:text-4xl font-bold tracking-[-0.02em]
+    text-[var(--text-primary)]
+    Text: "The circle, rebuilt so it works between strangers"
+  Body:
+    mt-5 font-body text-base text-[var(--text-secondary)] leading-relaxed
+    max-w-[54ch]
+    Text: "Twenty people. One fixed contribution. One person takes the pot
+      each cycle, in rotation. Same shape it has always had. What changes is
+      what holds it together."
+
+  THREE ROWS, mt-10 space-y-6
+    Each row: flex gap-4
+      Marker: mt-1 h-8 w-8 shrink-0 rounded-[var(--radius-sm)]
+              bg-[var(--bg-elevated)] grid place-items-center
+              inline SVG, 16px, stroke var(--accent-text), never an emoji
+      Title: font-body text-sm font-semibold text-[var(--text-primary)]
+      Copy:  mt-1 font-body text-sm text-[var(--text-secondary)] leading-relaxed
+
+    Row 1  "A bond instead of shame"
+           "Everyone locks a deposit. Miss a contribution and part of it is
+            slashed to cover the group. The circle continues instead of
+            collapsing."
+    Row 2  "The bond falls as you build history"
+           "Three times a contribution with no history. Half a contribution
+            after five completed circles. That is a credit file, earned
+            rather than issued."
+    Row 3  "The pot is held by a program, not a person"
+           "No organiser collects anything. Nobody can run off with it."
+
+  Note:
+    mt-8 pt-5 border-t border-[var(--border-subtle)]
+    font-body text-[11px] text-[var(--text-muted)] leading-relaxed
+    Text: "Groups is Phase 1. Contributions settle in USDC, never a volatile
+      asset."
+
+RIGHT (visual)
+  rounded-[--radius-lg] overflow-hidden
+  bg-[var(--bg-surface)] border border-[var(--border-subtle)]
+  Coded SVG, not a screenshot. See asset brief 12.3.
+
+  The visual is a CYCLE RING, not a chart:
+    - one node per member, arranged in a circle
+    - nodes before the current position: filled var(--success) at 40% opacity
+    - the current node: filled var(--accent), 100%, ring outside it
+    - nodes after: var(--bg-elevated), 1px border var(--border-default)
+    - centre: the pot amount in Geist Mono, 20px, --text-primary
+              beneath it "Cycle 3 of 20" in Inter 11px, --text-muted
+    - beneath the ring: "3 of 20 contributed this cycle" with a
+      1.5px progress rule, filled portion --accent
+  Animation: nodes fill in sequence on enter, 60ms stagger, once.
+             The ring itself does not rotate.
+
+  Why a ring and not a chart: the shape is the product. A circle of nodes
+  is the rotation made visible, and it reads in a language every person who
+  has run one already understands.
+```
+
+Responsive: below `lg` the ring renders **above** the text. The shape is the
+hook, and on mobile it has to land first.
+
+**Copy rules for this section.** The circle is described in the present tense
+wherever the code exists, and never with invented numbers. No example member
+counts, contribution amounts or pot totals unless they are the protocol's own
+defaults.
+
+---
+
+## 5. Section 4: Mechanism
 
 **Recipe:** `stacked-card-reveal` (COMPOSITION_RECIPES.md, Section D)
 **Layout family:** stacked layers
@@ -894,7 +996,87 @@ ANIMATION
 
 ---
 
-## 6. Section 4: Live Marketplace
+## 5A. Section 5: The Ladder
+
+**Recipe:** `vertical-process` (COMPOSITION_RECIPES.md, Section D)
+**Layout family:** sequential steps
+**Job:** Educate
+**Eyebrow:** none. The two eyebrows are on Groups and Compliance only
+
+```python
+data-section-name="TheLadder"
+
+SECTION
+  py-24 md:py-32 px-6 md:px-10
+  background: bg-[var(--bg-secondary)]
+
+CONTAINER
+  mx-auto max-w-5xl
+
+HEADER
+  max-w-3xl mb-14
+  Heading:
+    font-display text-3xl md:text-4xl font-bold tracking-[-0.02em]
+    text-[var(--text-primary)]
+    Text: "Finish a circle, earn the right to raise"
+  Subheading:
+    mt-4 font-body text-base text-[var(--text-secondary)] leading-relaxed
+    max-w-[58ch]
+    Text: "Every cycle you complete and every milestone an issuer clears
+      writes to the same record. It is portable, it is yours, and no bureau
+      issued it."
+
+FOUR STEPS, connected by a single vertical rule
+  The rule:
+    absolute left-[15px] top-2 bottom-2 w-px
+    bg-[var(--border-default)]
+    Behind every marker, never in front
+
+  Each step: relative pl-14 pb-12, last has pb-0
+    Marker:
+      absolute left-0 top-0 h-8 w-8 rounded-full
+      grid place-items-center
+      bg-[var(--bg-elevated)] border border-[var(--border-default)]
+      font-mono text-xs text-[var(--text-secondary)]
+      Text: "1" "2" "3" "4". Never a numeral icon, never an emoji
+    Title:
+      font-display text-lg font-semibold text-[var(--text-primary)]
+    Copy:
+      mt-2 font-body text-sm text-[var(--text-secondary)] leading-relaxed
+      max-w-[52ch]
+
+    Step 1  "Join a circle"
+            "Contribute the same amount as everyone else, every cycle. Your
+             bond is locked. It starts at three times a contribution."
+    Step 2  "Complete the rotation"
+            "Twenty cycles, one pot each. Miss one and the bond covers it,
+             so the group keeps going without you having to be trusted."
+    Step 3  "Your record updates"
+            "Four completed circles, zero defaults. That is on chain, under
+             your control, and legible to anyone who asks."
+    Step 4  "Raise as a business"
+            "The same record is what an issuer carries into a raise.
+             Milestones you clear add to it. Milestones you fail are on it
+             too."
+
+CLOSING LINE
+  mt-12 pt-6 border-t border-[var(--border-subtle)]
+  font-display text-xl md:text-2xl font-semibold text-[var(--text-primary)]
+  max-w-[40ch]
+  Text: "Savings to capital, on one ladder."
+
+Animation: markers and copy blur in on enter, 80ms stagger between steps.
+           The vertical rule draws top to bottom over 600ms.
+```
+
+**This section is the argument for Sluice being one protocol rather than two
+apps, and it is the reason the page is ten sections instead of eight.** Do not
+cut it for length, and do not let it become a feature list. It is a sequence,
+and the sequence is the point.
+
+---
+
+## 6. Section 6: Live Marketplace
 
 **Recipe:** bespoke dense terminal table. No recipe matches, written to Golden Example specificity.
 **Layout family:** content grid
@@ -985,7 +1167,7 @@ LOADING STATE
 
 ---
 
-## 7. Section 5: Adjudication
+## 7. Section 7: Adjudication
 
 **Recipe:** `tabbed-feature-explorer` (COMPOSITION_RECIPES.md, Section D)
 **Layout family:** interactive
@@ -1239,7 +1421,7 @@ trading surface and movement here reads as instability.
 
 ---
 
-## 8. Section 6: Compliance
+## 8. Section 8: Compliance
 
 **Recipe:** `split-image-text` (COMPOSITION_RECIPES.md), adapted. The image slot becomes a badge stack because no photography fits this content.
 **Layout family:** split content
@@ -1307,7 +1489,7 @@ RIGHT COLUMN
 
 ---
 
-## 9. Section 7: Metrics
+## 9. Section 9: Metrics
 
 **Recipe:** `metrics-section` (COMPOSITION_RECIPES.md, Section B)
 **Layout family:** metrics
@@ -1360,7 +1542,7 @@ COUNTER ANIMATION
 
 ---
 
-## 10. Section 8: Final CTA
+## 10. Section 10: Final CTA
 
 **Recipe:** bespoke centred crescendo. Deliberately not `footer-video`, so it does not collide with the footer's layout family.
 **Layout family:** crescendo
@@ -1814,6 +1996,168 @@ STEP 6, REVIEW
 
 ---
 
+## 14A. App Interior: Groups Screens
+
+**Phase 1.** These screens do not exist in Phase 0. Where a route is reachable
+before Groups ships, it renders the "coming next" state defined below.
+
+All app interior rules apply: static surface, grain, hairlines, colour blocking.
+**No video, no entrance animation on any `/app` route.** Values that change
+animate from old to new with a short numeric tween. Nothing else moves.
+
+### 14A.1 Circle list, `/app/groups`
+
+```
+HEADER
+  Title: "Your circles"
+  Primary action, top right: "Create a circle"
+
+EMPTY STATE, when the address is in no circle
+  Centred, max-w-[42ch]
+  Line 1: "You are not in a circle yet"
+  Line 2: "A circle is a fixed group saving together. Everyone contributes
+           the same amount each cycle, and one person takes the pot."
+  Action: "Find a circle" / "Create a circle"
+
+CIRCLE CARD, once in at least one
+  grid gap-3, one column below md, two above
+  Each card:
+    rounded-[--radius-lg] bg-[var(--bg-surface)]
+    border border-[var(--border-subtle)] p-5
+
+    Row 1: circle name, left
+           state chip, right
+             Forming    -> --text-muted
+             Active     -> --success
+             Completed  -> --text-secondary
+             Cancelled  -> --error
+    Row 2: the cycle ring in miniature, 48px, same encoding as section 4A
+    Row 3: "Cycle 3 of 20" in Geist Mono 13px, --text-primary
+           beneath: "12 of 20 contributed" --text-secondary 12px
+           progress rule, 1.5px, filled portion --accent
+    Row 4: "Your bond: 3.0x contribution" --text-muted 11px
+           "Next payment in 4d" --text-secondary 11px
+
+  Cards are links to /app/circle/:address
+```
+
+### 14A.2 Circle detail, `/app/circle/:address`
+
+The most important screen in Groups. Its job is to answer three questions
+without the user having to work: **where are we in the rotation, what do I owe,
+and what happens if someone does not pay.**
+
+```
+HEADER
+  Circle name, font-display 20px
+  State chip, right
+
+CYCLE RING, full size, 200px, centred
+  Same encoding as section 4A: completed nodes --success at 40%,
+  current node --accent with a ring, pending nodes --bg-elevated
+  Centre: pot amount, Geist Mono 22px
+          "Cycle 3 of 20", Inter 11px --text-muted
+
+CONTRIBUTION PANEL
+  The primary action area. Bordered, --bg-elevated, rounded-[--radius-md]
+
+  If you have contributed:
+    "You have contributed this cycle" --success, with a check rule
+    Secondary: "You contributed 2d ago" --text-muted 11px
+  If you have not, and the deadline has not passed:
+    Amount owed, Geist Mono 18px, --text-primary
+    "Due in 4d 6h", --text-secondary
+    Primary button: "Contribute 50 USDC"
+  If the deadline has passed and you have not:
+    --warning
+    "You missed cycle 3. Your bond has been slashed to cover it."
+    The bond reduction, stated in numbers, not percentages
+
+  Never soften the missed state. A member who understands what happened
+  is better off than one who is confused and does it again.
+
+BOND PANEL
+  "Your bond"                     3.0x contribution
+  "Posted"                        the amount, Geist Mono
+  "Remaining after slashing"      the amount, Geist Mono
+  "Your next circle would need"   2.0x, --accent-text
+  Footnote: "Completes this circle and your bond requirement falls."
+
+MEMBER LIST
+  One row per member, sorted by payout position
+  Each row:
+    position numeral, mono, --text-muted
+    address, truncated, mono
+    contributed state:
+      contributed  -> --success dot
+      pending      -> --border-default dot
+      defaulted    -> --error dot
+    received pot   -> --success, "received cycle N"
+  The current recipient's row is marked with a 1px --accent left rule
+
+  Never shame a defaulted member in the copy. "Missed this cycle" is
+  sufficient. The bond is the consequence; the interface does not add one.
+
+PAYOUT SCHEDULE
+  Ordered list, position and address, with your own row highlighted
+  --bg-elevated and a 1px --accent left rule
+```
+
+### 14A.3 Create a circle, `/app/groups/new`
+
+Four steps. No autosave to the browser; drafts go to the server per §2.2.
+
+```
+Step 1  Basics      name, contribution amount, currency (USDC, locked)
+Step 2  Size        member count, 5 to 50, with a live bond preview
+Step 3  Cadence     cycle length, weekly / fortnightly / monthly
+                    and the first cycle start date
+Step 4  Review      the full terms, including:
+                      your bond, sized by your track record
+                      the payout order rule, join order
+                      what happens on default
+                      the disbursement fee, 0.25% of the pot
+                    Confirm creates the circle and posts your bond
+
+The review step must state the bond in an absolute number and a multiple.
+"Your bond: 150 USDC, 3.0x your contribution." A percentage alone is
+abstract, and this is the one number a member needs to feel before locking it.
+```
+
+### 14A.4 "Coming next" state
+
+Rendered by `/app/groups` and the Groups nav item during Phase 0.
+
+```
+Centred, max-w-[46ch]
+  Heading: "Groups ships next"
+  Body: "Savings circles, rebuilt so they work between strangers. It needs
+         mobile money rails first, because the people this is for are not
+         buying SOL to pay gas."
+  Link: "Read the specification" -> the public product reference
+
+Rules:
+  - No mockup. Not one rendered circle, not one example member
+  - No fake numbers. Not a pot total, not a contribution amount
+  - The nav item stays present and clickable. It must never 404
+  - The state disappears automatically once Groups is live, not on a flag
+    someone has to remember to flip
+```
+
+### 14A.5 Acceptance tests
+
+- A member in no circle sees the empty state, not a blank grid
+- The cycle ring encodes completed, current and pending distinctly, and is
+  readable without colour
+- A member who has contributed sees confirmation, not a second payment prompt
+- A member who missed sees the missed state naming their bond reduction
+- The bond is stated as an absolute number and a multiple on both the create
+  review step and the circle detail
+- No example figures appear anywhere while Groups is unshipped
+- The "coming next" state renders with zero invented data
+
+---
+
 ## 15. Spec Self-Check (Step 3D Rule 7)
 
 - [x] Every element has exact Tailwind classes, no vague descriptions
@@ -1827,7 +2171,7 @@ STEP 6, REVIEW
 - [x] Wallet connection, hydration, protected routing, redirect, dropdown,
       disconnect and acceptance behaviour explicitly specified
 - [x] Eight sections, eight distinct layout families, no family repeated
-- [x] Two eyebrows across eight sections, gap of at least two after each
+- [x] Two eyebrows across ten sections, on Groups and Compliance, gap of at least two after each
 - [x] No `viewport={{ once: true }}` anywhere
 - [x] Live data contract specified: push transport, no client storage,
       seeded demo, automatic promotion, count-up transitions
@@ -1841,3 +2185,74 @@ STEP 6, REVIEW
       localStorage
 - [x] No em dashes anywhere in this document
 - [x] British English throughout
+
+---
+
+## Copy and punctuation
+
+`FRONTEND_SPEC.md` §16. Every string a person reads is in scope, on every route and
+every state: headings, body copy, labels, button text, helper text, placeholders,
+tooltips, validation messages, empty states, loading and error copy, toast text and
+onboarding.
+
+### The rule
+
+**A full stop ends a thought. A comma carries one on. Decide which before typing,
+not after.**
+
+The failure this exists to prevent is a run of short sentences where there was one
+sentence:
+
+```
+BAD   Nothing was changed. You can try again.
+GOOD  Nothing was changed, so you can try again.
+```
+
+That reads as two announcements when it is one fact and one instruction. The
+opposite error is just as bad and just as common, and it is the one a "replace every
+full stop with a comma" pass produces:
+
+```
+BAD   Nothing was changed, you can try again.
+GOOD  Nothing was changed, so you can try again.
+```
+
+That is a comma splice: two independent clauses joined by punctuation that cannot
+join them. **There is no mechanical rule here.** "Nothing was changed" and "you can
+try again" are independent, so they need a full stop, a semicolon, or a conjunction.
+They are also a single unit of meaning, so they should not be two paragraphs. That
+judgement is the whole job.
+
+### By context
+
+| Context | Rule | Example |
+|---|---|---|
+| Field label | No trailing punctuation | `What would you issue or fund (optional)` |
+| Button | No trailing punctuation | `Join the waitlist` |
+| Eyebrow, badge, stat | No trailing punctuation | `LIVE ON SOLANA DEVNET` |
+| Helper text under a field | One sentence, full stop | `We will help you make one during the beta.` |
+| Status confirmation | Full stop | `Connected.` |
+| Two related clauses, one thought | Comma or semicolon | `The rail you already hold decides whether this is usable by you at all.` |
+| Two independent clauses | Full stop, or semicolon, or a conjunction | `Nothing was changed. You can try again.` is **wrong**, because the second clause is an instruction belonging to the first |
+| Long paragraph | Full stops, sparingly | Break only where the meaning turns |
+
+### Also
+
+**No em dash in interface copy.** It reads as a flourish in a label and as a tic in
+body text. Use a comma, a semicolon, a colon or a full stop. The em dash belongs in
+a comment explaining a decision, not in a sentence somebody has to act on.
+
+**A sentence fragment can be correct.** `Not a launch.` and `Devnet only.` are
+fragments and they land harder than a padded sentence would. The test is whether the
+fragment is a complete thought, not whether it has a subject and a verb.
+
+**Vary the rhythm.** Three sentences of equal length in a row is the mechanical tell
+that copy was generated rather than written. If every paragraph is four words per
+sentence, rewrite for meaning, not to the same shape.
+
+### Scope
+
+This applies to the landing page, `/app` and every nested route, `/waitlist`,
+`/invite`, `/admin`, and every loading, empty, error and success state. When a new
+component is added its strings are audited with the component, not in a later sweep.
+
