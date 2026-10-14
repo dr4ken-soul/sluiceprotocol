@@ -167,7 +167,7 @@ export function WaitlistForm() {
         by someone deciding whether any of it applies to them.
       */}
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
+        <legend className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
           What would you use Sluice for
         </legend>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -253,7 +253,7 @@ export function WaitlistForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-intent" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          What would you issue or fund <span className="normal-case">(optional)</span>
+          What would you issue or fund <span className="normal-case tracking-normal text-[var(--text-muted)]">(optional)</span>
         </label>
         <textarea
           id="wl-intent"
@@ -277,7 +277,7 @@ export function WaitlistForm() {
       */}
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-region" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Where you are <span className="normal-case">(town or country, optional)</span>
+          Where you are <span className="normal-case tracking-normal text-[var(--text-muted)]">(town or country, optional)</span>
         </label>
         <input
           id="wl-region"
@@ -291,7 +291,7 @@ export function WaitlistForm() {
 
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-mm" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Mobile money you already use <span className="normal-case">(optional)</span>
+          Mobile money you already use <span className="normal-case tracking-normal text-[var(--text-muted)]">(optional)</span>
         </label>
         <input
           id="wl-mm"
@@ -307,7 +307,7 @@ export function WaitlistForm() {
       </div>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
+        <legend className="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
           Have you used Solana
         </legend>
         <div className="flex flex-wrap gap-2">
@@ -355,7 +355,7 @@ export function WaitlistForm() {
       */}
       <div className="flex flex-col gap-2">
         <label htmlFor="wl-wallet" className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--text-muted)]">
-          Solana wallet <span className="normal-case">(leave blank if you do not have one)</span>
+          Solana wallet <span className="normal-case tracking-normal text-[var(--text-muted)]">(leave blank if you do not have one)</span>
         </label>
         <input
           id="wl-wallet"
